@@ -1021,7 +1021,7 @@ class punsapi extends punsapi_core
 	*/
 	function edit_topic($post_id,$message,$subject,$hide_smilies=false,$silent=false,$bypassperm=false)
 	{
-		return edit_post($post_id,$message,$subject,$hide_smilies,$silent,$bypassperm);
+		return $this->edit_post($post_id,$message,$subject,$hide_smilies,$silent,$bypassperm);
 	}
 
 	/**
@@ -1349,7 +1349,7 @@ class punsapi extends punsapi_core
 	
 	Edit a post 
 	
-	@param integer id				ID of the post toedit
+	@param integer post_id			ID of the post toedit
 	@param string message			New message
 	@param string subject			The subject if it's a post-topic ('')
 	@param boolean hide_smilies		Transforme smilies or not (false)
@@ -1357,7 +1357,7 @@ class punsapi extends punsapi_core
 	@param boolean bypassperm		Bypass permissions (false)
 	@return boolean
 	*/
-	function edit_post($id,$message,$subject='',$hide_smilies=false,$silent=false,$bypassperm=false)
+	function edit_post($post_id,$message,$subject='',$hide_smilies=false,$silent=false,$bypassperm=false)
 	{
 		# Transforme hide_smiley bool in integer for sql query
 		$hide_smilies = ($hide_smilies == true || $hide_smilies == 1) ? 1 : 0;
