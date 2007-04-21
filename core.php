@@ -87,6 +87,7 @@ class punsapi_core
 		
 		# Options
 		$default_options = array(
+			'punsapi_date_formating' => true,
 			'check_bans' => true,
 			'quiet_visit' => false,
 			'disable_buffering' => false,
@@ -224,6 +225,17 @@ class punsapi_core
 
 		# Update online list
 		$this->_update_users_online();
+		
+		# Get locales dates if punsapi date formatting is enable
+		if ($this->options['punsapi_date_formating'])
+		{
+			$GLOBALS['locales_dates'] = array();
+			
+			if (file_exists(dirname(__FILE__).'/locales/'.$this->user['language'].'/date.lang.php'))
+				require dirname(__FILE__).'/locales/'.$this->user['language'].'/date.lang.php';
+			else
+				$this->fatal_error('There is no valid PunSAPI language pack \''.htmlspecialchars($this->user['language']).'\' installed. Please reinstall a language of that name in /include/punsapi/locales/', __FILE__, __LINE__);
+		}
 	}
 
 
@@ -1703,5 +1715,68 @@ class punsapi_core
 	}
 
 } /** class punsapi_core */
+
+
+/**
+@class		dt
+@author 	Olivier Meunier and contributors
+
+A class to format dates according to localisation settings.
+*/
+class dt
+{
+	function str($p,$ts=NULL)
+	{
+		if ($ts == NULL)
+			$ts = time();
+	
+		$hash = '799b4e471dc78154865706469d23d512';
+		$p = preg_replace('/(?<!%)%(a|A)/','{{'.$hash.'__$1%w__}}',$p);
+		$p = preg_replace('/(?<!%)%(b|B)/','{{'.$hash.'__$1%m__}}',$p);
+		
+		$res = strftime($p,$ts);
+		
+		$res = preg_replace_callback('/{{'.$hash.'__(a|A|b|B)([0-9]{1,2})__}}/',array('dt','_callback'),$res);
+		
+		return $res;
+	}
+
+	function dt2str($p,$dt)
+	{
+		return dt::str($p,strtotime($dt));
+	}
+
+	function iso8601($ts)
+	{
+		$tz = date('O',$ts);
+		$tz = substr($tz,0,-2).':'.substr($tz,-2);
+		return date('Y-m-d\\TH:i:s',$ts).$tz;
+	}
+
+	function _callback($args)
+	{
+		$b = array(1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'May',6=>'Jun',
+		7=>'Jul',8=>'Aug',9=>'Sep',10=>'Oct',11=>'Nov',12=>'Dec');
+		
+		$B = array(1=>'January',2=>'February',3=>'March',4=>'April',
+		5=>'May',6=>'June',7=>'July',8=>'August',9=>'September',
+		10=>'October',11=>'November',12=>'December');
+		
+		$a = array(1=>'Mon',2=>'Tue',3=>'Wed',4=>'Thu',5=>'Fri',
+		6=>'Sat',0=>'Sun');
+		
+		$A = array(1=>'Monday',2=>'Tuesday',3=>'Wednesday',4=>'Thursday',
+		5=>'Friday',6=>'Saturday',0=>'Sunday');
+		
+		return dt::locale(${$args[1]}[(integer) $args[2]]);
+	}
+
+	function locale($str)
+	{
+		return (!empty($GLOBALS['locales_dates'][$str])) ? $GLOBALS['locales_dates'][$str] : $str;
+	}
+
+} /** class dt */
+
 
 ?>
