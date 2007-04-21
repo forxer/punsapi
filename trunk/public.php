@@ -1515,15 +1515,31 @@ class punsapi extends punsapi_core
 	}
 
 	/**
+	@function format_date
+	
+	Alias of format_time.
+	
+	@param	string	timestamp		The time to format
+	@param	boolean	date_only		Only return date (false)
+	@param	boolean	relatives		Display or not relatives date "Today" / "Yesterday" (true)
+	@return	string
+	*/
+	function format_date($timestamp, $date_only=false, $relatives=true)
+	{
+		return $this->format_time($timestamp, $date_only, $relatives);
+	}
+
+	/**
 	@function format_time
 	
 	Format a time string according to $time_format and timezones
 	
 	@param	string	timestamp		The time to format
 	@param	boolean	date_only		Only return date (false)
+	@param	boolean	relatives		Display or not relatives date "Today" / "Yesterday" (true)
 	@return	string
 	*/
-	function format_time($timestamp, $date_only=false)
+	function format_time($timestamp, $date_only=false, $relatives=true)
 	{
 		if ($timestamp == '')
 			return $this->lang['common']['Never'];
@@ -1532,17 +1548,33 @@ class punsapi extends punsapi_core
 		$timestamp += $diff;
 		$now = time();
 
-		$date = date($this->config['o_date_format'], $timestamp);
-		$today = date($this->config['o_date_format'], $now+$diff);
-		$yesterday = date($this->config['o_date_format'], $now+$diff-86400);
-
-		if ($date == $today)
-			$date = $this->lang['common']['Today'];
-		else if ($date == $yesterday)
-			$date = $this->lang['common']['Yesterday'];
+		if ($this->options['punsapi_date_formating'])
+		{
+			$date = dt::str($GLOBALS['locales_dates']['default_date_format'], $timestamp);
+			$today = dt::str($GLOBALS['locales_dates']['default_date_format'], $now+$diff);
+			$yesterday = dt::str($GLOBALS['locales_dates']['default_date_format'], $now+$diff-86400);
+		}
+		else {
+			$date = date($this->config['o_date_format'], $timestamp);
+			$today = date($this->config['o_date_format'], $now+$diff);
+			$yesterday = date($this->config['o_date_format'], $now+$diff-86400);
+		}
+		
+		if ($relatives)
+		{
+			if ($date == $today)
+				$date = $this->lang['common']['Today'];
+			else if ($date == $yesterday)
+				$date = $this->lang['common']['Yesterday'];
+		}
 
 		if (!$date_only)
-			return $date.' '.date($this->config['o_time_format'], $timestamp);
+		{
+			if ($this->options['punsapi_date_formating'])
+				return $date.' '.dt::str($GLOBALS['locales_dates']['default_time_format'], $timestamp);
+			else
+				return $date.' '.date($this->config['o_time_format'], $timestamp);
+		}
 		else
 			return $date;
 	}
