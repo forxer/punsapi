@@ -238,7 +238,7 @@ class punsapi_core
 	function _unregister_globals()
 	{
 		$register_globals = @ini_get('register_globals');
-		if ($register_globals === "" || $register_globals === "0" || strtolower($register_globals === "off"))
+		if ($register_globals === "" || $register_globals === "0" || strtolower($register_globals) === "off")
 			return;
 
 		# Prevent script.php?GLOBALS[foo]=bar
