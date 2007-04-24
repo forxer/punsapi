@@ -1671,6 +1671,131 @@ class punsapi_core
 	}
 
 
+	/** Send email throught an SMTP server
+	----------------------------------------------------------*/
+
+	function _server_parse($socket, $expected_response)
+	{
+		$server_response = '';
+		while (substr($server_response, 3, 1) != ' ')
+		{
+			if (!($server_response = fgets($socket, 256)))
+				$this->fatal_error('Couldn\'t get mail server response codes. Please contact the forum administrator.', __FILE__, __LINE__);
+		}
+	
+		if (!(substr($server_response, 0, 3) == $expected_response))
+			$this->fatal_error('Unable to send e-mail. Please contact the forum administrator with the following error message reported by the SMTP server: "'.$server_response.'"', __FILE__, __LINE__);
+	}
+
+	function _smtp_mail($to, $subject, $message, $headers = '')
+	{
+		$recipients = explode(',', $to);
+	
+		# Are we using port 25 or a custom port?
+		if (strpos($this->config['o_smtp_host'], ':') !== false)
+			list($smtp_host, $smtp_port) = explode(':', $this->config['o_smtp_host']);
+		else {
+			$smtp_host = $this->config['o_smtp_host'];
+			$smtp_port = 25;
+		}
+	
+		if (!($socket = fsockopen($smtp_host, $smtp_port, $errno, $errstr, 15)))
+			$this->fatal_error('Could not connect to smtp host "'.$this->config['o_smtp_host'].'" ('.$errno.') ('.$errstr.')', __FILE__, __LINE__);
+	
+		$this->_server_parse($socket, '220');
+	
+		if ($this->config['o_smtp_user'] != '' && $this->config['o_smtp_pass'] != '')
+		{
+			fwrite($socket, 'EHLO '.$smtp_host."\r\n");
+			$this->_server_parse($socket, '250');
+	
+			fwrite($socket, 'AUTH LOGIN'."\r\n");
+			$this->_server_parse($socket, '334');
+	
+			fwrite($socket, base64_encode($this->config['o_smtp_user'])."\r\n");
+			$this->_server_parse($socket, '334');
+	
+			fwrite($socket, base64_encode($this->config['o_smtp_pass'])."\r\n");
+			$this->_server_parse($socket, '235');
+		}
+		else
+		{
+			fwrite($socket, 'HELO '.$smtp_host."\r\n");
+			$this->_server_parse($socket, '250');
+		}
+	
+		fwrite($socket, 'MAIL FROM: <'.$this->config['o_webmaster_email'].'>'."\r\n");
+		$this->_server_parse($socket, '250');
+	
+		$to_header = 'To: ';
+	
+		@reset($recipients);
+		while (list(, $email) = @each($recipients))
+		{
+			fwrite($socket, 'RCPT TO: <'.$email.'>'."\r\n");
+			$this->_server_parse($socket, '250');
+	
+			$to_header .= '<'.$email.'>, ';
+		}
+	
+		fwrite($socket, 'DATA'."\r\n");
+		$this->_server_parse($socket, '354');
+	
+		fwrite($socket, 'Subject: '.$subject."\r\n".$to_header."\r\n".$headers."\r\n\r\n".$message."\r\n");
+	
+		fwrite($socket, '.'."\r\n");
+		$this->_server_parse($socket, '250');
+	
+		fwrite($socket, 'QUIT'."\r\n");
+		fclose($socket);
+	
+		return true;
+	}
+
+
+	/** Intern date formating
+	----------------------------------------------------------*/
+
+	/**
+	@function _dates_callback
+	@author 	Olivier Meunier and contributors
+	
+	Perform date format
+	
+	@param	array	args
+	*/
+	function _dates_callback($args)
+	{
+		$b = array(1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'May',6=>'Jun',
+		7=>'Jul',8=>'Aug',9=>'Sep',10=>'Oct',11=>'Nov',12=>'Dec');
+		
+		$B = array(1=>'January',2=>'February',3=>'March',4=>'April',
+		5=>'May',6=>'June',7=>'July',8=>'August',9=>'September',
+		10=>'October',11=>'November',12=>'December');
+		
+		$a = array(1=>'Mon',2=>'Tue',3=>'Wed',4=>'Thu',5=>'Fri',
+		6=>'Sat',0=>'Sun');
+		
+		$A = array(1=>'Monday',2=>'Tuesday',3=>'Wednesday',4=>'Thursday',
+		5=>'Friday',6=>'Saturday',0=>'Sunday');
+		
+		return punsapi_core::_locales_dates(${$args[1]}[(integer) $args[2]]);
+	}
+
+	/**
+	@function _locales_dates
+	@author 	Olivier Meunier and contributors
+	
+	Replace string to the localized equivalent
+	
+	@param	array	args
+	*/
+	function _locales_dates($str)
+	{
+		return (!empty($GLOBALS['locales_dates'][$str])) ? $GLOBALS['locales_dates'][$str] : $str;
+	}
+
+
 	/** Old functions for backward compatibility
 	----------------------------------------------------------*/
 	
@@ -1715,68 +1840,5 @@ class punsapi_core
 	}
 
 } /** class punsapi_core */
-
-
-/**
-@class		dt
-@author 	Olivier Meunier and contributors
-
-A class to format dates according to localisation settings.
-*/
-class dt
-{
-	function str($p,$ts=NULL)
-	{
-		if ($ts == NULL)
-			$ts = time();
-	
-		$hash = '799b4e471dc78154865706469d23d512';
-		$p = preg_replace('/(?<!%)%(a|A)/','{{'.$hash.'__$1%w__}}',$p);
-		$p = preg_replace('/(?<!%)%(b|B)/','{{'.$hash.'__$1%m__}}',$p);
-		
-		$res = strftime($p,$ts);
-		
-		$res = preg_replace_callback('/{{'.$hash.'__(a|A|b|B)([0-9]{1,2})__}}/',array('dt','_callback'),$res);
-		
-		return $res;
-	}
-
-	function dt2str($p,$dt)
-	{
-		return dt::str($p,strtotime($dt));
-	}
-
-	function iso8601($ts)
-	{
-		$tz = date('O',$ts);
-		$tz = substr($tz,0,-2).':'.substr($tz,-2);
-		return date('Y-m-d\\TH:i:s',$ts).$tz;
-	}
-
-	function _callback($args)
-	{
-		$b = array(1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'May',6=>'Jun',
-		7=>'Jul',8=>'Aug',9=>'Sep',10=>'Oct',11=>'Nov',12=>'Dec');
-		
-		$B = array(1=>'January',2=>'February',3=>'March',4=>'April',
-		5=>'May',6=>'June',7=>'July',8=>'August',9=>'September',
-		10=>'October',11=>'November',12=>'December');
-		
-		$a = array(1=>'Mon',2=>'Tue',3=>'Wed',4=>'Thu',5=>'Fri',
-		6=>'Sat',0=>'Sun');
-		
-		$A = array(1=>'Monday',2=>'Tuesday',3=>'Wednesday',4=>'Thursday',
-		5=>'Friday',6=>'Saturday',0=>'Sunday');
-		
-		return dt::locale(${$args[1]}[(integer) $args[2]]);
-	}
-
-	function locale($str)
-	{
-		return (!empty($GLOBALS['locales_dates'][$str])) ? $GLOBALS['locales_dates'][$str] : $str;
-	}
-
-} /** class dt */
-
 
 ?>
