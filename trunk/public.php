@@ -1270,8 +1270,6 @@ class punsapi extends punsapi_core
 				
 				if (!$subscriber->isEmpty())
 				{
-					require $this->pun_root.'include/email.php';
-					
 					$notification_emails = array();
 
 					# Loop through subscribed users and send e-mails
@@ -1325,9 +1323,9 @@ class punsapi extends punsapi_core
 						if (isset($notification_emails[$subscriber->f('language')]))
 						{
 							if ($subscriber->f('notify_with_post') == '0')
-								pun_mail($subscriber->f('email'), $notification_emails[$subscriber->f('language')][0], $notification_emails[$subscriber->f('language')][1]);
+								$this->mail($subscriber->f('email'), $notification_emails[$subscriber->f('language')][0], $notification_emails[$subscriber->f('language')][1]);
 							else
-								pun_mail($subscriber->f('email'), $notification_emails[$subscriber->f('language')][2], $notification_emails[$subscriber->f('language')][3]);
+								$this->mail($subscriber->f('email'), $notification_emails[$subscriber->f('language')][2], $notification_emails[$subscriber->f('language')][3]);
 						}
 					}
 				}
@@ -1492,42 +1490,89 @@ class punsapi extends punsapi_core
 	}
 
 
-	/** Public utilities methods
+	/** Public emails methods
 	----------------------------------------------------------*/
 
 	/**
-	@function load_lang
+	@function is_valid_email
 	
-	Load a language file an pit data in $this->lang array.
+	Validate an e-mail address
 	
-	@param	string	part	Part/file to load
-	@return void
+	@param	string	email	Email to check
+	@return	boolean
 	*/
-	function load_lang($part)
+	function is_valid_email($email)
 	{
-		if (!empty($this->lang[$part]))
+		if (strlen($email) > 50)
 			return false;
-
-		require $this->pun_root.'lang/'.$this->user['language'].'/'.$part.'.php';
-		$var_name = 'lang_'.$part;
-		$this->lang[$part] = &$$var_name;
-		return true;
+	
+		return preg_match('/^(([^<>()[\]\\.,;:\s@"\']+(\.[^<>()[\]\\.,;:\s@"\']+)*)|("[^"\']+"))@((\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\])|(([a-zA-Z\d\-]+\.)+[a-zA-Z]{2,}))$/', $email);
 	}
 
 	/**
-	@function format_date
+	@function is_banned_email
 	
-	Alias of format_time.
+	Check if $email is banned
 	
-	@param	string	timestamp		The time to format
-	@param	boolean	date_only		Only return date (false)
-	@param	boolean	relatives		Display or not relatives date "Today" / "Yesterday" (true)
-	@return	string
+	@param	string	email	Email to check
+	@return	boolean
 	*/
-	function format_date($timestamp, $date_only=false, $relatives=true)
+	function is_banned_email($email)
 	{
-		return $this->format_time($timestamp, $date_only, $relatives);
+		foreach ($this->bans as $cur_ban)
+		{
+			if ($cur_ban['email'] != '' &&
+				($email == $cur_ban['email'] ||
+				(strpos($cur_ban['email'], '@') === false && stristr($email, '@'.$cur_ban['email']))))
+				return true;
+		}
+	
+		return false;
 	}
+
+	/**
+	@function mail
+	
+	Wrapper for PHP's mail()
+	
+	@param	string	to			Recipient of the email
+	@param	string	subject		Subject of the email to send
+	@param	string	message		Content of the email to send
+	@param	string	from		Sender/return address ('')
+	*/
+	function mail($to, $subject, $message, $from = '')
+	{
+		# Default sender/return address
+		if (!$from)
+			$from = '"'.str_replace('"', '', $this->config['o_board_title'].' '.$this->lang['common']['Mailer']).'" <'.$this->config['o_webmaster_email'].'>';
+	
+		# Do a little spring cleaning
+		$to = trim(preg_replace('#[\n\r]+#s', '', $to));
+		$subject = trim(preg_replace('#[\n\r]+#s', '', $subject));
+		$from = trim(preg_replace('#[\n\r:]+#s', '', $from));
+	
+		$headers = 'From: '.$from."\r\n".'Date: '.date('r')."\r\n".'MIME-Version: 1.0'."\r\n".'Content-transfer-encoding: 8bit'."\r\n".'Content-type: text/plain; charset='.$this->lang['common']['lang_encoding']."\r\n".'X-Mailer: PunBB Mailer';
+	
+		# Make sure all linebreaks are CRLF in message
+		$message = str_replace("\n", "\r\n", $this->linebreaks($message));
+	
+		if ($this->config['o_smtp_host'] != '')
+			$this->_smtp_mail($to, $subject, $message, $headers);
+		else
+		{
+			# Change the linebreaks used in the headers according to OS
+			if (strtoupper(substr(PHP_OS, 0, 3)) == 'MAC')
+				$headers = str_replace("\r\n", "\r", $headers);
+			else if (strtoupper(substr(PHP_OS, 0, 3)) != 'WIN')
+				$headers = str_replace("\r\n", "\n", $headers);
+	
+			mail($to, $subject, $message, $headers);
+		}
+	}
+
+
+	/** Dates
+	----------------------------------------------------------*/
 
 	/**
 	@function format_time
@@ -1550,9 +1595,9 @@ class punsapi extends punsapi_core
 
 		if ($this->options['punsapi_date_formating'])
 		{
-			$date = dt::str($GLOBALS['locales_dates']['default_date_format'], $timestamp);
-			$today = dt::str($GLOBALS['locales_dates']['default_date_format'], $now+$diff);
-			$yesterday = dt::str($GLOBALS['locales_dates']['default_date_format'], $now+$diff-86400);
+			$date = punsapi::str_date($GLOBALS['locales_dates']['default_date_format'], $timestamp);
+			$today = punsapi::str_date($GLOBALS['locales_dates']['default_date_format'], $now+$diff);
+			$yesterday = punsapi::str_date($GLOBALS['locales_dates']['default_date_format'], $now+$diff-86400);
 		}
 		else {
 			$date = date($this->config['o_date_format'], $timestamp);
@@ -1571,12 +1616,109 @@ class punsapi extends punsapi_core
 		if (!$date_only)
 		{
 			if ($this->options['punsapi_date_formating'])
-				return $date.' '.dt::str($GLOBALS['locales_dates']['default_time_format'], $timestamp);
+				return $date.' '.punsapi::str_date($GLOBALS['locales_dates']['default_time_format'], $timestamp);
 			else
 				return $date.' '.date($this->config['o_time_format'], $timestamp);
 		}
 		else
 			return $date;
+	}
+
+	/**
+	@function format_date
+	
+	Alias of format_time.
+	
+	@param	string	timestamp		The time to format
+	@param	boolean	date_only		Only return date (false)
+	@param	boolean	relatives		Display or not relatives date "Today" / "Yesterday" (true)
+	@return	string
+	*/
+	function format_date($timestamp, $date_only=false, $relatives=true)
+	{
+		return $this->format_time($timestamp, $date_only, $relatives);
+	}
+
+	/**
+	@function str_date
+	@author 	Olivier Meunier and contributors
+	
+	Format a date according to locales settings
+	
+	@param	string	format		Format, using strftime string formats
+	@return string
+	*/
+	function str_date($format,$ts=NULL)
+	{
+		if ($ts == NULL)
+			$ts = time();
+	
+		$hash = '799b4e471dc78154865706469d23d512';
+		$format = preg_replace('/(?<!%)%(a|A)/','{{'.$hash.'__$1%w__}}',$format);
+		$format = preg_replace('/(?<!%)%(b|B)/','{{'.$hash.'__$1%m__}}',$format);
+		
+		$res = strftime($format,$ts);
+		
+		$res = preg_replace_callback('/{{'.$hash.'__(a|A|b|B)([0-9]{1,2})__}}/',array('punsapi_core','_dates_callback'),$res);
+		
+		return $res;
+	}
+
+	/**
+	@function date_to_str
+	@author 	Olivier Meunier and contributors
+	
+	Transform a date to the equivalent string according to localized settings
+	
+	@param	string	p		Format, using strftime string formats
+	@param	string	date	The date to format
+	@return string
+	*/
+	function date_to_str($format,$date)
+	{
+		return punsapi::str_date($format,strtotime($date));
+	}
+
+	/**
+	@function iso8601_date
+	@author 	Olivier Meunier and contributors
+	
+	Return a date formated to the iso8601 standard
+	
+	@param	string	ts		Timestamp to format ('')
+	@return string
+	*/
+	function iso8601_date($ts=NULL)
+	{
+		if ($ts == NULL)
+			$ts = time();
+		
+		$tz = date('O',$ts);
+		$tz = substr($tz,0,-2).':'.substr($tz,-2);
+		return date('Y-m-d\\TH:i:s',$ts).$tz;
+	}
+
+
+	/** Public utilities methods
+	----------------------------------------------------------*/
+
+	/**
+	@function load_lang
+	
+	Load a language file an pit data in $this->lang array.
+	
+	@param	string	part	Part/file to load
+	@return void
+	*/
+	function load_lang($part)
+	{
+		if (!empty($this->lang[$part]))
+			return false;
+
+		require $this->pun_root.'lang/'.$this->user['language'].'/'.$part.'.php';
+		$var_name = 'lang_'.$part;
+		$this->lang[$part] = &$$var_name;
+		return true;
 	}
 
 	/**
@@ -1874,22 +2016,6 @@ class punsapi extends punsapi_core
 		}
 		else
 			return trim($str);
-	}
-
-	/**
-	@function is_valid_email
-	
-	Validate an e-mail address
-	
-	@param	string	email	Email to check
-	@return	boolean
-	*/
-	function is_valid_email($email)
-	{
-		if (strlen($email) > 50)
-			return false;
-	
-		return preg_match('/^(([^<>()[\]\\.,;:\s@"\']+(\.[^<>()[\]\\.,;:\s@"\']+)*)|("[^"\']+"))@((\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\])|(([a-zA-Z\d\-]+\.)+[a-zA-Z]{2,}))$/', $email);
 	}
 
 	/**
