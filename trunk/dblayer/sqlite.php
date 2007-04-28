@@ -51,14 +51,14 @@ class punsapi_sqlite
 			@touch($db_name);
 			@chmod($db_name, 0666);
 			if (!file_exists($db_name))
-				error('Unable to create new database \''.$db_name.'\'. Permission denied', __FILE__, __LINE__);
+				exit('Unable to create new database \''.$db_name.'\'. Permission denied');
 		}
 
 		if (!is_readable($db_name))
-			error('Unable to open database \''.$db_name.'\' for reading. Permission denied', __FILE__, __LINE__);
+			exit('Unable to open database \''.$db_name.'\' for reading. Permission denied');
 
 		if (!is_writable($db_name))
-			error('Unable to open database \''.$db_name.'\' for writing. Permission denied', __FILE__, __LINE__);
+			exit('Unable to open database \''.$db_name.'\' for writing. Permission denied');
 
 		if ($p_connect)
 			$this->link_id = @sqlite_popen($db_name, 0666, $sqlite_error);
@@ -66,7 +66,7 @@ class punsapi_sqlite
 			$this->link_id = @sqlite_open($db_name, 0666, $sqlite_error);
 
 		if (!$this->link_id)
-			error('Unable to open database \''.$db_name.'\'. SQLite reported: '.$sqlite_error, __FILE__, __LINE__);
+			exit('Unable to open database \''.$db_name.'\'. SQLite reported: '.$sqlite_error);
 		else
 			return $this->link_id;
 	}

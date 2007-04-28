@@ -1785,7 +1785,7 @@ class punsapi extends punsapi_core
 			$text = $this->_do_bbcode($text);
 	
 			if ($this->config['p_message_img_tag'] == '1')
-				$text = preg_replace('#\[img\]((ht|f)tps?://)([^\s<"]*?)\[/img\]#e', '$this->_handle_img_tag(\'$1$3\')', $text);
+				$text = preg_replace('#\[img( align=([^\[]*?))?\]((ht|f)tps?://)([^\s<"]*?)\[/img\]#e', '$this->_handle_img_tag(\'$3$5\', false, \'$2\')', $text);
 		}
 	
 		# Deal with newlines, tabs and multiple spaces
@@ -1845,7 +1845,7 @@ class punsapi extends punsapi_core
 			$text = $this->_do_bbcode($text);
 	
 			if ($this->config['p_sig_img_tag'] == '1')
-				$text = preg_replace('#\[img\]((ht|f)tps?://)([^\s<"]*?)\[/img\]#e', '$this->_handle_img_tag(\'$1$3\', true)', $text);
+				$text = preg_replace('#\[img( align=([^\[]*?))?\]((ht|f)tps?://)([^\s<"]*?)\[/img\]#e', '$this->_handle_img_tag(\'$3$5\', true, \'$2\')', $text);
 		}
 	
 		# Deal with newlines, tabs and multiple spaces
