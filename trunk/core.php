@@ -255,7 +255,7 @@ class punsapi_core
 
 		# Prevent script.php?GLOBALS[foo]=bar
 		if (isset($_REQUEST['GLOBALS']) || isset($_FILES['GLOBALS']))
-			exit('I\'ll have a steak sandwich and... a steak sandwich.');
+			exit('Qu\'est-ce qu\'on se fait chier !');
 
 		# Variables that shouldn't be unset
 		$no_unset = array('GLOBALS', '_GET', '_POST', '_COOKIE', '_REQUEST', '_SERVER', '_ENV', '_FILES');
@@ -283,23 +283,23 @@ class punsapi_core
 		switch ($this->conf['db_type'])
 		{
 			case 'mysql':
-				require $this->pun_root.'include/dblayer/mysql.php';
-				require dirname(__FILE__).'/xdblayer/xmysql.php';
+				require dirname(__FILE__).'/dblayer/mysql.php';
+				$this->db = new punsapi_mysql($this->conf['db_host'], $this->conf['db_username'], $this->conf['db_password'], $this->conf['db_name'], $this->conf['db_prefix'], $this->conf['p_connect']);
 				break;
 
 			case 'mysqli':
-				require $this->pun_root.'include/dblayer/mysqli.php';
-				require dirname(__FILE__).'/xdblayer/xmysqli.php';
+				require dirname(__FILE__).'/dblayer/mysqli.php';
+				$this->db = new punsapi_mysqli($this->conf['db_host'], $this->conf['db_username'], $this->conf['db_password'], $this->conf['db_name'], $this->conf['db_prefix'], $this->conf['p_connect']);
 				break;
 
 			case 'pgsql':
-				require $this->pun_root.'include/dblayer/pgsql.php';
-				require dirname(__FILE__).'/xdblayer/xpgsql.php';
+				require dirname(__FILE__).'/dblayer/pgsql.php';
+				$this->db = new punsapi_pgsql($this->conf['db_host'], $this->conf['db_username'], $this->conf['db_password'], $this->conf['db_name'], $this->conf['db_prefix'], $this->conf['p_connect']);
 				break;
 
 			case 'sqlite':
-				require $this->pun_root.'include/dblayer/sqlite.php';
-				require dirname(__FILE__).'/xdblayer/xsqlite.php';
+				require dirname(__FILE__).'/dblayer/sqlite.php';
+				$this->db = new punsapi_sqlite($this->conf['db_host'], $this->conf['db_username'], $this->conf['db_password'], $this->conf['db_name'], $this->conf['db_prefix'], $this->conf['p_connect']);
 				break;
 
 			default:
@@ -308,7 +308,6 @@ class punsapi_core
 		}
 
 		# connect to db
-		$this->db = new xDBLayer($this->conf['db_host'], $this->conf['db_username'], $this->conf['db_password'], $this->conf['db_name'], $this->conf['db_prefix'], $this->conf['p_connect']);
 		$this->db->start_transaction();
 	}
 
