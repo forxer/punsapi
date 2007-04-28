@@ -52,8 +52,7 @@ class punsapi_pgsql
 				list($db_host, $dbport) = explode(':', $db_host);
 				$connect_str[] = 'host='.$db_host.' port='.$dbport;
 			}
-			else
-			{
+			else {
 				if ($db_host != 'localhost')
 					$connect_str[] = 'host='.$db_host;
 			}
@@ -74,7 +73,7 @@ class punsapi_pgsql
 			$this->link_id = @pg_connect(implode(' ', $connect_str));
 
 		if (!$this->link_id)
-			error('Unable to connect to PostgreSQL server', __FILE__, __LINE__);
+			exit('Unable to connect to PostgreSQL server');
 		else
 			return $this->link_id;
 	}

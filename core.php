@@ -43,7 +43,6 @@ object model, so the copyright returns to Rickard Andersson.
 @param	array		lang					Languages datas
 @param	array		bans					Bans datas array
 @param	array		_cache					Saved functions results array
-@param	boolean		mod_puntoolbar			Support for PunToolBar 1.4 mod
 */
 class punsapi_core
 {
@@ -83,7 +82,6 @@ class punsapi_core
 		$this->_cache = array();
 		$this->start_time = NULL;
 		$this->time_diff = NULL;
-		$this->mod_puntoolbar = false;
 		
 		# Options
 		$default_options = array(
@@ -176,10 +174,6 @@ class punsapi_core
 		}
 		
 		$this->config = &$pun_config;
-		
-		# support for PunToolBar
-		if (!empty($this->config['o_ptb_installed']))
-			$this->mod_puntoolbar = true;
 
 		# Enable output buffering
 		if (!$this->options['disable_buffering'])
@@ -679,8 +673,8 @@ class punsapi_core
 				$this->set_error($this->lang['prof_reg']['Username reserved chars']);
 				return false;
 			}
-
-			if (preg_match('#\[b\]|\[/b\]|\[u\]|\[/u\]|\[i\]|\[/i\]|\[color|\[/color\]|\[quote\]|\[quote=|\[/quote\]|\[code\]|\[/code\]|\[img\]|\[/img\]|\[url|\[/url\]|\[email|\[/email\]#i', $username))
+			
+			if (preg_match('#\[b\]|\[/b\]|\[u\]|\[/u\]|\[i\]|\[/i\]|\[color|\[/color\]|\[quote\]|\[quote=|\[/quote\]|\[code\]|\[/code\]|\[img\]|\[/img\]|\[url|\[/url\]|\[email|\[/email\]|\[s\]|\[/s\]|\[nospam|\[/nospam\]|\[acronym|\[/acronym\]|\[left|\[/left\]|\[right|\[/right\]|\[center|\[/center\]|\[justify|\[/justify\]|\[small|\[/small\]|\[large|\[/large\]|\[sup|\[/sup\]|\[sub|\[/sub\]|\[---\]#i', $username))
 			{
 				$this->set_error($this->lang['prof_reg']['Username BBCode']);
 				return false;
@@ -796,69 +790,73 @@ class punsapi_core
 	*/
 	function _pre_parse_bbcode($text, $is_signature=false)
 	{
-		if ($this->mod_puntoolbar)
-		{
-			// Change all simple BBCodes to lower case
-			$a = array('[B]', '[I]', '[U]', '[S]', '[/B]', '[/I]', '[/U]', '[/S]');
-			$b = array('[b]', '[i]', '[u]', '[s]', '[/b]', '[/i]', '[/u]', '[/s]');
-			$text = str_replace($a, $b, $text);
-		
-			// Do the more complex BBCodes (also strip excessive whitespace and useless quotes)
-			$a = array( '#\[url=("|\'|)(.*?)\\1\]\s*#i',
-						'#\[url\]\s*#i',
-						'#\s*\[/url\]#i',
-						'#\[email=("|\'|)(.*?)\\1\]\s*#i',
-						'#\[email\]\s*#i',
-						'#\s*\[/email\]#i',
-						'#\[nospam=("|\'|)(.*?)\\1\]\s*#is',
-						'#\[nospam\]\s*#i',
-						'#\s*\[/nospam\]#i',
-						'#\[acronym=("|\'|)(.*?)\\1\]\s*#is',
-						'#\[acronym\]\s*#i',
-						'#\s*\[/acronym\]#i',
-						'#\[img\]\s*(.*?)\s*\[/img\]#is',
-						'#\[colou?r=("|\'|)(.*?)\\1\](.*?)\[/colou?r\]#is');
-		
-			$b = array(	'[url=$2]',
-						'[url]',
-						'[/url]',
-						'[email=$2]',
-						'[email]',
-						'[/email]',
-						'[nospam=$2]',
-						'[nospam]',
-						'[/nospam]',
-						'[acronym=$2]',
-						'[acronym]',
-						'[/acronym]',
-						'[img]$1[/img]',
-						'[color=$2]$3[/color]');
-		}
-		else {
-			# Change all simple BBCodes to lower case
-			$a = array('[B]', '[I]', '[U]', '[/B]', '[/I]', '[/U]');
-			$b = array('[b]', '[i]', '[u]', '[/b]', '[/i]', '[/u]');
-			$text = str_replace($a, $b, $text);
-		
-			# Do the more complex BBCodes (also strip excessive whitespace and useless quotes)
-			$a = array( '#\[url=("|\'|)(.*?)\\1\]\s*#i',
-						'#\[url\]\s*#i',
-						'#\s*\[/url\]#i',
-						'#\[email=("|\'|)(.*?)\\1\]\s*#i',
-						'#\[email\]\s*#i',
-						'#\s*\[/email\]#i',
-						'#\[img\]\s*(.*?)\s*\[/img\]#is',
-						'#\[colou?r=("|\'|)(.*?)\\1\](.*?)\[/colou?r\]#is');
-		
-			$b = array(	'[url=$2]',
-						'[url]',
-						'[/url]',
-						'[email=$2]',
-						'[email]',
-						'[/email]',
-						'[img]$1[/img]',
-						'[color=$2]$3[/color]');
-		}
+		// Change all simple BBCodes to lower case
+		$a = array('[B]', '[I]', '[U]', '[S]', '[/B]', '[/I]', '[/U]', '[/S]');
+		$b = array('[b]', '[i]', '[u]', '[s]', '[/b]', '[/i]', '[/u]', '[/s]');
+		$text = str_replace($a, $b, $text);
+	
+		// Do the more complex BBCodes (also strip excessive whitespace and useless quotes)
+		$a = array( '#\[url=("|\'|)(.*?)\\1\]\s*#i',
+					'#\[url\]\s*#i',
+					'#\s*\[/url\]#i',
+					'#\[email=("|\'|)(.*?)\\1\]\s*#i',
+					'#\[email\]\s*#i',
+					'#\s*\[/email\]#i',
+					'#\[nospam=("|\'|)(.*?)\\1\]\s*#is',
+					'#\[nospam\]\s*#i',
+					'#\s*\[/nospam\]#i',
+					'#\[acronym=("|\'|)(.*?)\\1\]\s*#is',
+					'#\[acronym\]\s*#i',
+					'#\s*\[/acronym\]#i',
+					'#\[img( align=([^\[]*?))?\]\s*(.*?)\s*\[/img\]#is',
+					'#\[colou?r=("|\'|)(.*?)\\1\](.*?)\[/colou?r\]#is',
+					'#\[left\]\s*#i',
+					'#\s*\[/left\]#i',
+					'#\[right\]\s*#i',
+					'#\s*\[/right\]#i',
+					'#\[center\]\s*#i',
+					'#\s*\[/center\]#i',
+					'#\[justify\]\s*#i',
+					'#\s*\[/justify\]#i',
+					'#\[small\]\s*#is',
+					'#\s*\[/small\]#i',
+					'#\[large\]\s*#is',
+					'#\s*\[/large\]#i',
+					'#\[sup\]\s*#is',
+					'#\s*\[/sup\]#i',
+					'#\[sub\]\s*#is',
+					'#\s*\[/sub\]#i');
+	
+		$b = array(	'[url=$2]',
+					'[url]',
+					'[/url]',
+					'[email=$2]',
+					'[email]',
+					'[/email]',
+					'[nospam=$2]',
+					'[nospam]',
+					'[/nospam]',
+					'[acronym=$2]',
+					'[acronym]',
+					'[/acronym]',
+					'[img$1]$3[/img]',
+					'[color=$2]$3[/color]',
+					'[left]',
+					'[/left]',
+					'[right]',
+					'[/right]',
+					'[center]',
+					'[/center]',
+					'[justify]',
+					'[/justify]',
+					'[small]',
+					'[/small]',
+					'[large]',
+					'[/large]',
+					'[sup]',
+					'[/sup]',
+					'[sub]',
+					'[/sub]');
 		
 		if (!$is_signature)
 		{
@@ -892,6 +890,12 @@ class punsapi_core
 			if (preg_match('#\[quote=(&quot;|"|\'|)(.*)\\1\]|\[quote\]|\[/quote\]|\[code\]|\[/code\]#i', $text))
 			{
 				$this->set_error($this->lang['prof_reg']['Signature quote/code']);
+				return false;
+			}
+			elseif (preg_match('#\[---\]|\[left\]|\[/left\]|\[center\]|\[/center\]|\[right\]|\[/right\]|\[justify\]|\[/justify\]#i', $text))
+			{
+				$this->load_lang('puntoolbar');
+				message($this->lang['lang_ptb']['Signature balises']);
 				return false;
 			}
 		}
@@ -1075,14 +1079,26 @@ class punsapi_core
 	@function _handle_img_tag
 	Turns an URL from the [img] tag into an <img> tag or a <a href...> tag
 	*/
-	function _handle_img_tag($url, $is_signature=false)
+	function handle_img_tag($url, $is_signature=false, $align='')
 	{
+		$style = '';
+		if ($align != '')
+		{
+			$align = strtoupper($align);
+			if ($align == 'G' || $align == 'L')
+				$style = ' style="float: left; margin: 0 1em 1em 0;"';
+			elseif ($align == 'D' || $align == 'R')
+				$style = ' style="float: right; margin: 0 0 1em 1em;"';
+			elseif ($align == 'C')
+				$style = ' style="display: block; margin:0 auto;"';
+		}
+	
 		$img_tag = '<a href="'.$url.'">&lt;'.$this->lang['common']['Image link'].'&gt;</a>';
 	
 		if ($is_signature && $this->user['show_img_sig'] != '0')
-			$img_tag = '<img class="sigimage" src="'.$url.'" alt="'.htmlspecialchars($url).'" />';
+			$img_tag = '<img class="sigimage" src="'.$url.'" alt="'.htmlspecialchars($url).'"'.$style.' />';
 		else if (!$is_signature && $this->user['show_img'] != '0')
-			$img_tag = '<img class="postimg" src="'.$url.'" alt="'.htmlspecialchars($url).'" />';
+			$img_tag = '<img class="postimg" src="'.$url.'" alt="'.htmlspecialchars($url).'"'.$style.' />';
 	
 		return $img_tag;
 	}
@@ -1101,69 +1117,55 @@ class punsapi_core
 			$text = preg_replace('#\[\/quote\]\s*#', '</p></div></blockquote><p>', $text);
 		}
 	
-		if ($this->mod_puntoolbar)
-		{
-			$pattern = array('#\[b\](.*?)\[/b\]#s',
-							 '#\[i\](.*?)\[/i\]#s',
-							 '#\[u\](.*?)\[/u\]#s',
-							 '#\[s\](.*?)\[/s\]#s',
-							 '#\[q\](.*?)\[/q\]#s',
-							 '#\[c\](.*?)\[/c\]#s',
-							 '#\[url\]([^\[]*?)\[/url\]#e',
-							 '#\[url=([^\[]*?)\](.*?)\[/url\]#e',
-							 '#\[nospam\]([^\[]*?)\[/nospam\]#e',
-							 '#\[nospam=([^\[]*?)\](.*?)\[/nospam\]#e',
-							 '#\[email\]([^\[]*?)\[/email\]#',
-							 '#\[email=([^\[]*?)\](.*?)\[/email\]#',
-							 '#\[acronym\]([^\[]*?)\[/acronym\]#',
-							 '#\[acronym=([^\[]*?)\](.*?)\[/acronym\]#',
-							 '#\[color=([a-zA-Z]*|\#?[0-9a-fA-F]{6})](.*?)\[/color\]#s',
-							 '#\[---\]#s',
-							 '#\[left\](.*?)\[/left\]#s',
-							 '#\[right\](.*?)\[/right\]#s',
-							 '#\[center\](.*?)\[/center\]#s',
-							 '#\[justify\](.*?)\[/justify\]#s');
-		
-			$replace = array('<strong>$1</strong>',
-							 '<em>$1</em>',
-							 '<ins>$1</ins>',
-							 '<del>$1</del>',
-							 '<q>$1</q>',
-							 '<code>$1</code>',
-							 'handle_url_tag(\'$1\')',
-							 'handle_url_tag(\'$1\', \'$2\')',
-							 'nospam_tag(\'$1\')',
-							 'nospam_tag(\'$1\', \'$2\')',
-							 '<a href="mailto:$1">$1</a>',
-							 '<a href="mailto:$1">$2</a>',
-							 '<acronym>$1</acronym>',
-							 '<acronym title="$1">$2</acronym>',
-							 '<span style="color: $1">$2</span>',
-							 '</p><hr /><p>',
-							 '</p><p style="text-align:left">$1</p><p>',
-							 '</p><p style="text-align:right">$1</p><p>',
-							 '</p><p style="text-align:center">$1</p><p>',
-							 '</p><p style="text-align:justify">$1</p><p>');
-		}
-		else {
-			$pattern = array('#\[b\](.*?)\[/b\]#s',
-							 '#\[i\](.*?)\[/i\]#s',
-							 '#\[u\](.*?)\[/u\]#s',
-							 '#\[url\]([^\[]*?)\[/url\]#e',
-							 '#\[url=([^\[]*?)\](.*?)\[/url\]#e',
-							 '#\[email\]([^\[]*?)\[/email\]#',
-							 '#\[email=([^\[]*?)\](.*?)\[/email\]#',
-							 '#\[color=([a-zA-Z]*|\#?[0-9a-fA-F]{6})](.*?)\[/color\]#s');
-		
-			$replace = array('<strong>$1</strong>',
-							 '<em>$1</em>',
-							 '<span class="bbu">$1</span>',
-							 '$this->_handle_url_tag(\'$1\')',
-							 '$this->_handle_url_tag(\'$1\', \'$2\')',
-							 '<a href="mailto:$1">$1</a>',
-							 '<a href="mailto:$1">$2</a>',
-							 '<span style="color: $1">$2</span>');
-		}
+		$pattern = array('#\[b\](.*?)\[/b\]#s',
+						 '#\[i\](.*?)\[/i\]#s',
+						 '#\[u\](.*?)\[/u\]#s',
+						 '#\[s\](.*?)\[/s\]#s',
+						 '#\[q\](.*?)\[/q\]#s',
+						 '#\[c\](.*?)\[/c\]#s',
+						 '#\[url\]([^\[]*?)\[/url\]#e',
+						 '#\[url=([^\[]*?)\](.*?)\[/url\]#e',
+						 '#\[nospam\]([^\[]*?)\[/nospam\]#e',
+						 '#\[nospam=([^\[]*?)\](.*?)\[/nospam\]#e',
+						 '#\[email\]([^\[]*?)\[/email\]#',
+						 '#\[email=([^\[]*?)\](.*?)\[/email\]#',
+						 '#\[acronym\]([^\[]*?)\[/acronym\]#',
+						 '#\[acronym=([^\[]*?)\](.*?)\[/acronym\]#',
+						 '#\[small\]([^\[]*?)\[/small\]#',
+						 '#\[large\]([^\[]*?)\[/large\]#',
+						 '#\[sup\]([^\[]*?)\[/sup\]#',
+						 '#\[sub\]([^\[]*?)\[/sub\]#',
+						 '#\[color=([a-zA-Z]*|\#?[0-9a-fA-F]{6})](.*?)\[/color\]#s',
+						 '#\[---\]#s',
+						 '#\[left\](.*?)\[/left\]#s',
+						 '#\[right\](.*?)\[/right\]#s',
+						 '#\[center\](.*?)\[/center\]#s',
+						 '#\[justify\](.*?)\[/justify\]#s');
+	
+		$replace = array('<strong>$1</strong>',
+						 '<em>$1</em>',
+						 '<ins>$1</ins>',
+						 '<del>$1</del>',
+						 '<q>$1</q>',
+						 '<code>$1</code>',
+						 'handle_url_tag(\'$1\')',
+						 'handle_url_tag(\'$1\', \'$2\')',
+						 'nospam_tag(\'$1\')',
+						 'nospam_tag(\'$1\', \'$2\')',
+						 '<a href="mailto:$1">$1</a>',
+						 '<a href="mailto:$1">$2</a>',
+						 '<acronym>$1</acronym>',
+						 '<acronym title="$1">$2</acronym>',
+						 '<span style="font-size: smaller;">$1</span>',
+						 '<span style="font-size: larger;">$1</span>',
+						 '<sup>$1</sup>',
+						 '<sub>$1</sub>',
+						 '<span style="color: $1">$2</span>',
+						 '</p><hr /><p>',
+						 '</p><p style="text-align: left">$1</p><p>',
+						 '</p><p style="text-align: right">$1</p><p>',
+						 '</p><p style="text-align: center">$1</p><p>',
+						 '</p><p style="text-align: justify">$1</p><p>');
 		
 		# This thing takes a while! :)
 		$text = preg_replace($pattern, $replace, $text);
@@ -1257,15 +1259,9 @@ class punsapi_core
 	
 		if (empty($noise_match))
 		{
-			if ($this->mod_puntoolbar)
-			{
-				$noise_match = array('[quote', '[code', '[url', '[img', '[email', '[color', '[colour', '[acronym', '[nospam', 'quote]', 'code]', 'url]', 'img]', 'email]', 'color]', 'colour]', 'acronym]', 'nospam]', '^', '$', '&', '(', ')', '<', '>', '`', '\'', '"', '|', ',', '@', '_', '?', '%', '~', '+', '[', ']', '{', '}', ':', '\\', '/', '=', '#', ';', '!', '*');
-				$noise_replace = array('',       '',      '',     '',     '',       '',       '',        '',       '',      '',     '',     '',       '',       '',        ' ', ' ', ' ', ' ', ' ', ' ', ' ', '',  '',   ' ', ' ', ' ', ' ', '',  ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '' ,  ' ', ' ', ' ', ' ', ' ', ' ');
-			}
-			else {
-				$noise_match = 		array('[quote', '[code', '[url', '[img', '[email', '[color', '[colour', 'quote]', 'code]', 'url]', 'img]', 'email]', 'color]', 'colour]', '^', '$', '&', '(', ')', '<', '>', '`', '\'', '"', '|', ',', '@', '_', '?', '%', '~', '+', '[', ']', '{', '}', ':', '\\', '/', '=', '#', ';', '!', '*');
-				$noise_replace =	array('',       '',      '',     '',     '',       '',       '',        '',       '',      '',     '',     '',       '',       '',        ' ', ' ', ' ', ' ', ' ', ' ', ' ', '',  '',   ' ', ' ', ' ', ' ', '',  ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '' ,  ' ', ' ', ' ', ' ', ' ', ' ');
-			}				
+			# with PunToolBar support
+			$noise_match = 		array('[quote', '[code', '[url', '[img', '[email', '[color', '[colour', '[acronym', '[nospam', 'quote]', 'code]', 'url]', 'img]', 'email]', 'color]', 'colour]', 'acronym]', 'nospam]', '^', '$', '&', '(', ')', '<', '>', '`', '\'', '"', '|', ',', '@', '_', '?', '%', '~', '+', '[', ']', '{', '}', ':', '\\', '/', '=', '#', ';', '!', '*');
+			$noise_replace =	array('',       '',      '',     '',     '',       '',       '',        '',         '',        '',       '',      '',     '',     '',       '',       '',        '',         '',        ' ', ' ', ' ', ' ', ' ', ' ', ' ', '',  '',   ' ', ' ', ' ', ' ', '',  ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '' ,  ' ', ' ', ' ', ' ', ' ', ' ');
 	
 			$stopwords = (array)@file($this->pun_root.'lang/'.$this->user['language'].'/stopwords.txt');
 			$stopwords = array_map('trim', $stopwords);
