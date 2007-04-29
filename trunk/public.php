@@ -192,6 +192,246 @@ class punsapi extends punsapi_core
 			return $user;
 		}
 	}
+	
+	/**
+	@function add_user
+	
+	Add a user
+	
+	@param	string	username		The username
+	@param	string	email1			The user email
+	@param	string	pwd1			The user password ('')
+	@param	string	pwd2			Password confirmation ('')
+	@param	string	email2			Email confirmation ('')
+	@param	string	language		The user language ('')
+	@param	string	timezone		The user timezone ('')
+	@param	boolean	save_pass		Save pass between visits (true)
+	@param	integer	email_setting	Privacy preference (1)
+	@return boolean
+	*/
+	function add_user($username, $email1, $pwd1='', $pwd2='', $email2='', $language='', $timezone='', $save_pass=true, $email_setting=1)
+	{
+		$this->load_lang('prof_reg');
+		$this->load_lang('register');
+
+		# Check that someone from this IP didn't register a user within the last hour (DoS prevention)
+		$result = $this->db->query('SELECT 1 FROM '.$this->db->prefix.'users WHERE registration_ip=\''.$_SERVER['REMOTE_ADDR'].'\' AND registered>'.(time() - 3600)) or $this->fatal_error('Unable to fetch user info', __FILE__, __LINE__, $this->db->error());
+
+		if ($this->db->num_rows($result))
+		{
+			$this->set_error('A new user was registered with the same IP address as you within the last hour. To prevent registration flooding, at least an hour has to pass between registrations from the same IP. Sorry for the inconvenience.');
+			return false;
+		}
+
+		$username = $this->trim($username);
+		$email1 = strtolower(trim($email1));
+
+		if ($this->config['o_regs_verify'] == '1')
+		{
+			$email2 = strtolower(trim($email2));
+	
+			$password1 = random_pass(8);
+			$password2 = $password1;
+		}
+		else {
+			$password1 = trim($pwd1);
+			$password2 = trim($pwd2);
+		}
+
+		# Convert multiple whitespace characters into one (to prevent people from registering with indistinguishable usernames)
+		$username = preg_replace('#\s+#s', ' ', $username);
+		
+		# Validate username and passwords
+		if (strlen($username) < 2)
+		{
+			$this->set_error($this->lang['prof_reg']['Username too short']);
+			return false;
+		}
+		else if ($this->strlen($username) > 25)	// This usually doesn't happen since the form element only accepts 25 characters
+		{
+			$this->set_error($this->lang['common']['Bad request']);
+			return false;
+		}
+		else if (strlen($password1) < 4)
+		{
+			$this->set_error($this->lang['prof_reg']['Pass too short']);
+			return false;
+		}
+		else if ($password1 != $password2)
+		{
+			$this->set_error($this->lang['prof_reg']['Pass not match']);
+			return false;
+		}
+		else if (!strcasecmp($username, 'Guest') || !strcasecmp($username, $this->lang['common']['Guest']))
+		{
+			$this->set_error($this->lang['prof_reg']['Username guest']);
+			return false;
+		}
+		else if (preg_match('/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/', $username))
+		{
+			$this->set_error($this->lang['prof_reg']['Username IP']);
+			return false;
+		}
+		else if ((strpos($username, '[') !== false || strpos($username, ']') !== false) && strpos($username, '\'') !== false && strpos($username, '"') !== false)
+		{
+			$this->set_error($this->lang['prof_reg']['Username reserved chars']);
+			return false;
+		}
+		else if (preg_match('#\[b\]|\[/b\]|\[u\]|\[/u\]|\[i\]|\[/i\]|\[color|\[/color\]|\[quote\]|\[quote=|\[/quote\]|\[code\]|\[/code\]|\[img\]|\[/img\]|\[url|\[/url\]|\[email|\[/email\]|\[s\]|\[/s\]|\[nospam|\[/nospam\]|\[acronym|\[/acronym\]|\[left|\[/left\]|\[right|\[/right\]|\[center|\[/center\]|\[justify|\[/justify\]|\[small|\[/small\]|\[large|\[/large\]|\[sup|\[/sup\]|\[sub|\[/sub\]|\[---\]#i', $username))
+		{
+			$this->set_error($this->lang['prof_reg']['Username BBCode']);
+			return false;
+		}
+
+		# Check username for any censored words
+		if ($this->config['o_censoring'] == '1')
+		{
+			# If the censored username differs from the username
+			if ($this->censor_words($username) != $username)
+			{
+				$this->set_error($this->lang['register']['Username censor']);
+				return false;
+			}
+		}
+
+		# Check that the username (or a too similar username) is not already registered
+		$result = $this->db->query('SELECT username FROM '.$this->db->prefix.'users WHERE UPPER(username)=UPPER(\''.$this->db->escape($username).'\') OR UPPER(username)=UPPER(\''.$this->db->escape(preg_replace('/[^\w]/', '', $username)).'\')') or $this->fatal_error('Unable to fetch user info', __FILE__, __LINE__, $this->db->error());
+
+		if ($this->db->num_rows($result))
+		{
+			$busy = $this->db->result($result);
+			$this->set_error($this->lang['register']['Username dupe 1'].' '.$this->htmlspecialchars($busy).'. '.$this->lang['register']['Username dupe 2']);
+			return false;
+		}
+
+		# Validate e-mail
+		if (!$this->is_valid_email($email1))
+		{
+			$this->set_error($this->lang['common']['Invalid e-mail']);
+			return false;
+		}
+		else if ($this->config['o_regs_verify'] == '1' && $email1 != $email2)
+		{
+			$this->set_error($this->lang['register']['E-mail not match']);
+			return false;
+		}
+
+		# Check it it's a banned e-mail address
+		if ($this->is_banned_email($email1))
+		{
+			if ($this->config['p_allow_banned_email'] == '0')
+			{
+				$this->set_error($this->lang['prof_reg']['Banned e-mail']);
+				return false;
+			}
+
+			$banned_email = true;	// Used later when we send an alert e-mail
+		}
+		else
+			$banned_email = false;
+
+		# Check if someone else already has registered with that e-mail address
+		$dupe_list = array();
+
+		$result = $this->db->query('SELECT username FROM '.$this->db->prefix.'users WHERE email=\''.$email1.'\'') or $this->fatal_error('Unable to fetch user info', __FILE__, __LINE__, $this->db->error());
+		if ($this->db->num_rows($result))
+		{
+			if ($this->config['p_allow_dupe_email'] == '0')
+			{
+				$this->set_error($this->lang['prof_reg']['Dupe e-mail']);
+				return false;
+			}
+
+			while ($cur_dupe = $this->db->fetch_assoc($result))
+				$dupe_list[] = $cur_dupe['username'];
+		}
+
+		# Make sure we got a valid language string
+		if ($language != '')
+		{
+			$language = preg_replace('#[\.\\\/]#', '', $language);
+			if (!file_exists(PUN_ROOT.'lang/'.$language.'/common.php'))
+			{
+				$this->set_error($this->lang['common']['Bad request']);
+				return false;
+			}
+		}
+		else
+			$language = $this->config['o_default_lang'];
+
+		if ($timezone != '')
+			$timezone = round($timezone, 1);
+		else
+			$timezone = $this->config['o_server_timezone'];
+
+		$save_pass = ($save_pass === false) ? '0' : '1';
+
+		if ($email_setting < 0 || $email_setting > 2)
+			$email_setting = 1;
+
+		# Insert the new user into the database. We do this now to get the last inserted id for later use.
+		$now = time();
+	
+		$intial_group_id = ($this->config['o_regs_verify'] == '0') ? $this->config['o_default_user_group'] : PUN_UNVERIFIED;
+		$password_hash = $this->_hash($password1);
+	
+		# Add the user
+		$this->db->query('INSERT INTO '.$this->db->prefix.'users (username, group_id, password, email, email_setting, save_pass, timezone, language, style, registered, registration_ip, last_visit) VALUES(\''.$this->db->escape($username).'\', '.$intial_group_id.', \''.$password_hash.'\', \''.$email1.'\', '.$email_setting.', '.$save_pass.', '.$timezone.' , \''.$this->db->escape($language).'\', \''.$this->config['o_default_style'].'\', '.$now.', \''.$_SERVER['REMOTE_ADDR'].'\', '.$now.')') or $this->fatal_error('Unable to create user', __FILE__, __LINE__, $this->db->error());
+		$new_uid = $this->db->insert_id();
+
+		# If we previously found out that the e-mail was banned
+		if ($banned_email && $this->config['o_mailing_list'] != '')
+		{
+			$mail_subject = 'Alert - Banned e-mail detected';
+			$mail_message = 'User \''.$username.'\' registered with banned e-mail address: '.$email1."\n\n".'User profile: '.$this->config['o_base_url'].'/profile.php?id='.$new_uid."\n\n".'-- '."\n".'Forum Mailer'."\n".'(Do not reply to this message)';
+	
+			$this->mail($this->config['o_mailing_list'], $mail_subject, $mail_message);
+		}
+
+		# If we previously found out that the e-mail was a dupe
+		if (!empty($dupe_list) && $this->config['o_mailing_list'] != '')
+		{
+			$mail_subject = 'Alert - Duplicate e-mail detected';
+			$mail_message = 'User \''.$username.'\' registered with an e-mail address that also belongs to: '.implode(', ', $dupe_list)."\n\n".'User profile: '.$this->config['o_base_url'].'/profile.php?id='.$new_uid."\n\n".'-- '."\n".'Forum Mailer'."\n".'(Do not reply to this message)';
+	
+			$this->mail($this->config['o_mailing_list'], $mail_subject, $mail_message);
+		}
+
+		# Should we alert people on the admin mailing list that a new user has registered?
+		if ($this->config['o_regs_report'] == '1')
+		{
+			$mail_subject = 'Alert - New registration';
+			$mail_message = 'User \''.$username.'\' registered in the forums at '.$this->config['o_base_url']."\n\n".'User profile: '.$this->config['o_base_url'].'/profile.php?id='.$new_uid."\n\n".'-- '."\n".'Forum Mailer'."\n".'(Do not reply to this message)';
+	
+			$this->mail($$this->config['o_mailing_list'], $mail_subject, $mail_message);
+		}
+
+		# Must the user verify the registration or do we log him/her in right now?
+		if ($this->config['o_regs_verify'] == '1')
+		{
+			# Load the "welcome" template
+			$mail_tpl = trim(file_get_contents(PUN_ROOT.'lang/'.$this->user['language'].'/mail_templates/welcome.tpl'));
+
+			# The first row contains the subject
+			$first_crlf = strpos($mail_tpl, "\n");
+			$mail_subject = trim(substr($mail_tpl, 8, $first_crlf-8));
+			$mail_message = trim(substr($mail_tpl, $first_crlf));
+
+			$mail_subject = str_replace('<board_title>', $this->config['o_board_title'], $mail_subject);
+			$mail_message = str_replace('<base_url>', $this->config['o_base_url'].'/', $mail_message);
+			$mail_message = str_replace('<username>', $username, $mail_message);
+			$mail_message = str_replace('<password>', $password1, $mail_message);
+			$mail_message = str_replace('<login_url>', $this->config['o_base_url'].'/login.php', $mail_message);
+			$mail_message = str_replace('<board_mailer>', $this->config['o_board_title'].' '.$this->lang['common']['Mailer'], $mail_message);
+
+			$this->mail($email1, $mail_subject, $mail_message);
+
+			return true;
+		}
+
+		$this->_set_cookie($new_uid, $password_hash, ($save_pass != '0') ? $now + 31536000 : 0);
+		return true;
+	}
 
 	/**
 	@function get_user_id
