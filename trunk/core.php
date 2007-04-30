@@ -151,7 +151,8 @@ class punsapi_core
 		}
 
 		# Define a few commonly used constants
-		define('PUN_ROOT', $this->pun_root);
+		if (!defined('PUN_ROOT')) define('PUN_ROOT', $this->pun_root);
+		
 		define('PUN_UNVERIFIED', 32000);
 		define('PUN_ADMIN', 1);
 		define('PUN_MOD', 2);
