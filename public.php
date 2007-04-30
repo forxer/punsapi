@@ -1730,6 +1730,51 @@ class punsapi extends punsapi_core
 	}
 
 
+	/** News
+	----------------------------------------------------------*/
+
+	/**
+	@function get_news
+	@author Morph1er (from Puntal project)
+	
+	Return topics and posts, like some news
+	
+	@param	string	forum_id	Forum(s) ID(s) ; seperate multiples by comma
+	@param	mixed	limit		Number of news to return ('10')
+	@return recordset
+	*/
+	function get_news($forum_id,$limit=10)
+	{
+		$fids = explode(',', $forum_id);
+		foreach ($fids as $fid)
+			$tmp_news_id[] = " t.forum_id='".$fid."'";
+
+		$strReq = 
+		'SELECT u.use_avatar, p.message, p.hide_smilies, p.poster_id, t.id as tid, p.poster, '.
+		't.subject, t.posted, t.last_post,t.num_replies,t.num_views, f.id AS fid, f.forum_name '.
+		'FROM '.$this->db->prefix.'posts AS p '.
+		'	INNER JOIN '.$this->db->prefix.'users AS u ON u.id=p.poster_id,	'.$this->db->prefix.'topics AS t '.
+		'	INNER JOIN '.$this->db->prefix.'forums AS f ON f.id=t.forum_id '.
+		'	LEFT JOIN '.$this->db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id=3) '.
+		'WHERE p.posted=t.posted '.
+		'AND (fp.read_forum IS NULL OR fp.read_forum=1) '.
+		'AND t.moved_to IS NULL '.
+		'AND  t.sticky=0 '.
+		'AND ('.implode(' OR ', $tmp_news_id).') '.
+		'ORDER BY t.posted DESC';
+
+		if (!empty($limit))
+		{
+			$limit = (preg_match('/^[0-9]+$/',$limit)) ? '0,'.$limit : $limit;
+			$strReq .= ' LIMIT '.$limit.' ';
+		}
+
+		$rs = $this->db->select($strReq) or $this->fatal_error('Unable to fetch news', __FILE__, __LINE__, $this->db->error());
+
+		return $rs;		
+	}
+
+
 	/** Public emails methods
 	----------------------------------------------------------*/
 
