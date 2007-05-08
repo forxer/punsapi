@@ -72,7 +72,6 @@ class punsapi extends punsapi_core
 			return $this->htmlspecialchars($this->config['o_board_title']);
 		
 		echo $this->htmlspecialchars($this->config['o_board_title']);
-		return true;
 	}
 
 	/**
@@ -89,7 +88,6 @@ class punsapi extends punsapi_core
 			return $this->config['o_board_desc'];
 		
 		echo $this->config['o_board_desc'];
-		return true;
 	}
 
 	/**
@@ -106,7 +104,6 @@ class punsapi extends punsapi_core
 			return $this->config['o_base_url'];
 		
 		echo $this->config['o_base_url'];
-		return true;
 	}
 
 	/**
@@ -123,7 +120,6 @@ class punsapi extends punsapi_core
 			return $this->config['o_default_lang'];
 		
 		echo $this->config['o_default_lang'];
-		return true;
 	}
 
 	/**
@@ -140,7 +136,6 @@ class punsapi extends punsapi_core
 			return $this->config['o_default_style'];
 		
 		echo $this->config['o_default_style'];
-		return true;
 	}
 
 
@@ -447,7 +442,6 @@ class punsapi extends punsapi_core
 			return $this->user['id'];
 		
 		echo $this->user['id'];
-		return true;
 	}
 
 	/**
@@ -467,7 +461,6 @@ class punsapi extends punsapi_core
 			return $user['group_id'];
 		
 		echo $user['group_id'];
-		return true;
 	}
 	
 	/**
@@ -487,7 +480,6 @@ class punsapi extends punsapi_core
 			return $this->htmlspecialchars($user['username']);
 		
 		echo $this->htmlspecialchars($user['username']);
-		return true;
 	}
 	
 	/**
@@ -507,7 +499,6 @@ class punsapi extends punsapi_core
 			return $user['email'];
 		
 		echo $user['email'];
-		return true;
 	}
 	
 	/**
@@ -527,7 +518,6 @@ class punsapi extends punsapi_core
 			return $this->_get_title($user);
 		
 		echo $this->_get_title($user);
-		return true;
 	}
 	
 	/**
@@ -547,7 +537,6 @@ class punsapi extends punsapi_core
 			return $this->htmlspecialchars($user['realname']);
 		
 		echo $this->htmlspecialchars($user['realname']);
-		return true;
 	}
 	
 	/**
@@ -567,7 +556,6 @@ class punsapi extends punsapi_core
 			return $this->htmlspecialchars($user['profession']);
 		
 		echo $this->htmlspecialchars($user['profession']);
-		return true;
 	}
 	
 	/**
@@ -587,7 +575,6 @@ class punsapi extends punsapi_core
 			return $this->htmlspecialchars($user['url']);
 		
 		echo $this->htmlspecialchars($user['url']);
-		return true;
 	}
 	
 	/**
@@ -607,7 +594,6 @@ class punsapi extends punsapi_core
 			return $this->htmlspecialchars($user['jabber']);
 		
 		echo $this->htmlspecialchars($user['jabber']);
-		return true;
 	}
 	
 	/**
@@ -627,7 +613,6 @@ class punsapi extends punsapi_core
 			return $this->htmlspecialchars($user['icq']);
 		
 		echo $this->htmlspecialchars($user['icq']);
-		return true;
 	}
 	
 	/**
@@ -647,7 +632,6 @@ class punsapi extends punsapi_core
 			return $this->htmlspecialchars($user['msn']);
 		
 		echo $this->htmlspecialchars($user['msn']);
-		return true;
 	}
 	
 	/**
@@ -667,7 +651,6 @@ class punsapi extends punsapi_core
 			return $this->htmlspecialchars($user['aim']);
 		
 		echo $this->htmlspecialchars($user['aim']);
-		return true;
 	}
 	
 	/**
@@ -687,7 +670,6 @@ class punsapi extends punsapi_core
 			return $this->htmlspecialchars($user['yahoo']);
 		
 		echo $this->htmlspecialchars($user['yahoo']);
-		return true;
 	}
 	
 	/**
@@ -707,7 +689,6 @@ class punsapi extends punsapi_core
 			return $this->htmlspecialchars($user['location']);
 		
 		echo $this->htmlspecialchars($user['location']);
-		return true;
 	}
 	
 	/**
@@ -727,7 +708,6 @@ class punsapi extends punsapi_core
 			return $user['language'];
 		
 		echo $user['language'];
-		return true;
 	}
 	
 	/**
@@ -747,7 +727,6 @@ class punsapi extends punsapi_core
 			return $user['style'];
 		
 		echo $user['style'];
-		return true;
 	}
 	
 	/**
@@ -782,7 +761,6 @@ class punsapi extends punsapi_core
 			return $user_avatar;
 		
 		echo $user_avatar;
-		return true;
 	}
 	
 	/**
@@ -803,7 +781,6 @@ class punsapi extends punsapi_core
 			return $this->format_time($user['last_post'],$date_only);
 		
 		echo $this->format_time($user['last_post'],$date_only);
-		return true;
 	}
 	
 	/**
@@ -824,7 +801,6 @@ class punsapi extends punsapi_core
 			return $this->format_time($user['registered'],$date_only);
 		
 		echo $this->format_time($user['registered'],$date_only);
-		return true;
 	}
 	
 	/**
@@ -845,7 +821,6 @@ class punsapi extends punsapi_core
 			return $this->format_time($user['last_visit'],$date_only);
 		
 		echo $this->format_time($user['last_visit'],$date_only);
-		return true;
 	}
 
 	/**
@@ -1984,6 +1959,111 @@ class punsapi extends punsapi_core
 	}
 
 
+	/** Statistics methods
+	----------------------------------------------------------*/
+
+	/**
+	@function get_total_users
+	
+	Display the total number of users
+	
+	@param	boolean	return		Return value, not display it (false)
+	@return integer
+	*/
+	function get_total_users($return=false)
+	{
+		if ($cache = $this->_get_cache('get_total_users', 'foo'))
+			$total_users = $cache;
+		else {
+			$result = $this->db->query('SELECT COUNT(id)-1 FROM '.$this->db->prefix.'users') or $this->fatal_error('Unable to fetch total user count', __FILE__, __LINE__, $this->db->error());
+			$total_users = (integer) $this->db->result($result);
+			
+			$this->_set_cache('get_total_users', 'foo', $total_users);
+		}
+		
+		if ($return)
+			return $total_users;
+		
+		echo $total_users;
+	}
+
+	/**
+	@function get_last_user
+	
+	Return informations about the last registered user
+	
+	@return array('id','username')
+	*/
+	function get_last_user()
+	{
+		if ($cache = $this->_get_cache('get_last_user', 'foo'))
+			return $cache;
+		else {
+			$result = $this->db->query('SELECT id, username FROM '.$this->db->prefix.'users ORDER BY registered DESC LIMIT 1') or $this->fatal_error('Unable to fetch newest registered user', __FILE__, __LINE__, $this->db->error());
+			$last_user = $this->db->fetch_assoc($result);
+			
+			$this->_set_cache('get_last_user', 'foo', $last_user);
+			return $last_user;
+		}
+	}
+
+	/**
+	@function get_totals_entries
+	
+	Return total of topics and total of posts in an array
+	
+	@return array('total_topics','total_posts')
+	*/
+	function get_totals_entries()
+	{
+		if ($cache = $this->_get_cache('get_totals_topics_and_posts', 'foo'))
+			return $cache;
+		else {
+			$result = $this->db->query('SELECT SUM(num_topics) AS total_topics, SUM(num_posts) AS total_posts FROM '.$this->db->prefix.'forums') or $this->fatal_error('Unable to fetch topic/post count', __FILE__, __LINE__, $this->db->error());
+			$totals = $this->db->fetch_assoc($result);
+			
+			$this->_set_cache('get_totals_topics_and_posts', 'foo', $totals);
+			return $totals;
+		}
+	}
+
+	/**
+	@function get_total_topics
+	
+	Retourn the total of topics
+	
+	@param	boolean	return		Return value, not display it (false)
+	@return integer
+	*/
+	function get_total_topics($return=false)
+	{
+		$totals = $this->get_totals_entries();
+		
+		if ($return)
+			return (integer) $totals['total_topics'];
+		
+		echo (integer) $totals['total_topics'];
+	}
+
+	/**
+	@function get_total_posts
+	
+	Retourn the total of posts
+	
+	@param	boolean	return		Return value, not display it (false)
+	@return integer
+	*/
+	function get_total_posts($return=false)
+	{
+		$totals = $this->get_totals_entries();
+		
+		if ($return)
+			return (integer) $totals['total_posts'];
+		
+		echo (integer) $totals['total_posts'];
+	}
+
+
 	/** Public utilities methods
 	----------------------------------------------------------*/
 
@@ -2324,6 +2404,8 @@ class punsapi extends punsapi_core
 	@function reset_error
 	
 	Reset error array stack
+	
+	@return void
 	*/
 	function reset_error()
 	{
@@ -2334,6 +2416,8 @@ class punsapi extends punsapi_core
 	@function has_error
 	
 	Retourne vrai si il y a des erreurs.
+	
+	@return boolean
 	*/
 	function has_error()
 	{
@@ -2414,7 +2498,8 @@ class punsapi extends punsapi_core
 		require dirname(__FILE__).'/fatal_error.php';
 			
 		# If a database connection was established (before this error) we close it
-		if ($db_error) $this->db->close();
+		if ($db_error) 
+			$this->db->close();
 	
 		exit;
 	}
@@ -2429,6 +2514,7 @@ class punsapi extends punsapi_core
 	Display the execution time of the script
 	
 	@param	boolean	return		Return value, not display it (false)
+	@return void/str
 	*/
 	function get_exec_time($return=false)
 	{
@@ -2442,7 +2528,6 @@ class punsapi extends punsapi_core
 			return $this->time_diff;
 		
 		echo $this->time_diff;
-		return true;
 	}
 
 	/**
@@ -2451,6 +2536,7 @@ class punsapi extends punsapi_core
 	Display the total of queries executed
 	
 	@param	boolean	return		Return value, not display it (false)
+	@return void/str
 	*/
 	function get_num_queries($return=false)
 	{
@@ -2461,7 +2547,6 @@ class punsapi extends punsapi_core
 			return $this->db->get_num_queries();
 		
 		echo $this->db->get_num_queries();
-		return true;
 	}
 
 	/**
@@ -2471,6 +2556,7 @@ class punsapi extends punsapi_core
 	
 	@param	string	str			Format string of the line
 	@param	boolean	return		Return value, not display it (false)
+	@return void/str
 	*/
 	function get_debug_line($str='<p id="debug_line">[ Generated in %1$s seconds, %2$s queries executed ]</p>',$return=false)
 	{
@@ -2481,7 +2567,6 @@ class punsapi extends punsapi_core
 			return sprintf($str, $this->get_exec_time(true), $this->get_num_queries(true));
 		
 		printf($str, $this->get_exec_time(true), $this->get_num_queries(true));
-		return true;
 	}
 
 	/**
@@ -2491,6 +2576,7 @@ class punsapi extends punsapi_core
 	
 	@param	mixed	datas		Datas to display
 	@param	boolean	return		Return value, not display it (false)
+	@return void/str
 	*/
 	function var_export($datas, $return=false)
 	{
@@ -2503,7 +2589,6 @@ class punsapi extends punsapi_core
 			return $str;
 		
 		echo $str;
-		return true;
 	}
 
 
