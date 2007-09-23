@@ -23,7 +23,7 @@
 
 /**
 @class		punsapi
-@version	0.3 for PunBB 1.2.x
+@version	0.4 for PunBB 1.2.x
 @author 	Vincent Garnier
 
 A "toolbox class" to play with PunBB on your website :)
@@ -1572,11 +1572,13 @@ class punsapi extends punsapi_core
 	*/
 	function edit_post($post_id,$message,$subject='',$hide_smilies=false,$silent=false,$bypassperm=false)
 	{
+		$post_id = intval($post_id);
+		
 		# Transforme hide_smiley bool in integer for sql query
 		$hide_smilies = ($hide_smilies == true || $hide_smilies == 1) ? 1 : 0;
 
 		# Fetch some info about the post, the topic and the forum
-		$cur_post = $this->db->select('SELECT f.id AS fid, f.forum_name, f.moderators, f.redirect_url, fp.post_replies, fp.post_topics, t.id AS tid, t.subject, t.posted, t.closed, p.poster, p.poster_id, p.message, p.hide_smilies FROM '.$this->db->prefix.'posts AS p INNER JOIN '.$this->db->prefix.'topics AS t ON t.id=p.topic_id INNER JOIN '.$this->db->prefix.'forums AS f ON f.id=t.forum_id LEFT JOIN '.$this->db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id='.$this->user['g_id'].') WHERE (fp.read_forum IS NULL OR fp.read_forum=1) AND p.id='.$id) or $this->fatal_error('Unable to fetch post info', __FILE__, __LINE__, $this->db->error());
+		$cur_post = $this->db->select('SELECT f.id AS fid, f.forum_name, f.moderators, f.redirect_url, fp.post_replies, fp.post_topics, t.id AS tid, t.subject, t.posted, t.closed, p.poster, p.poster_id, p.message, p.hide_smilies FROM '.$this->db->prefix.'posts AS p INNER JOIN '.$this->db->prefix.'topics AS t ON t.id=p.topic_id INNER JOIN '.$this->db->prefix.'forums AS f ON f.id=t.forum_id LEFT JOIN '.$this->db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id='.$this->user['g_id'].') WHERE (fp.read_forum IS NULL OR fp.read_forum=1) AND p.id='.$post_id) or $this->fatal_error('Unable to fetch post info', __FILE__, __LINE__, $this->db->error());
 			
 		if ($cur_post->isEmpty())
 		{
@@ -1592,7 +1594,7 @@ class punsapi extends punsapi_core
 		$rs = $this->db->select('SELECT id FROM '.$this->db->prefix.'posts WHERE topic_id='.$cur_post->f('tid').' ORDER BY posted LIMIT 1') or $this->fatal_error('Unable to fetch post info', __FILE__, __LINE__, $this->db->error());
 		$topic_post_id = $rs->f('id');
 		
-		$can_edit_subject = ($id == $topic_post_id && (($this->user['g_edit_subjects_interval'] == '0' || (time() - $cur_post->f('posted')) < $this->user['g_edit_subjects_interval']) || $is_admmod)) ? true : false;
+		$can_edit_subject = ($post_id == $topic_post_id && (($this->user['g_edit_subjects_interval'] == '0' || (time() - $cur_post->f('posted')) < $this->user['g_edit_subjects_interval']) || $is_admmod)) ? true : false;
 		
 		# Do we have permission to edit this post?
 		if (($this->user['g_edit_posts'] == '0' ||
@@ -1631,13 +1633,13 @@ class punsapi extends punsapi_core
 				$this->db->query('UPDATE '.$this->db->prefix.'topics SET subject=\''.$this->db->escape($subject).'\' WHERE id='.$cur_post->f('tid').' OR moved_to='.$cur_post->f('tid')) or $this->fatal_error('Unable to update topic', __FILE__, __LINE__, $this->db->error());
 	
 				# We changed the subject, so we need to take that into account when we update the search words
-				$this->_update_search_index('edit', $id, $message, $subject);
+				$this->_update_search_index('edit', $post_id, $message, $subject);
 			}
 			else
-				$this->_update_search_index('edit', $id, $message);
+				$this->_update_search_index('edit', $post_id, $message);
 	
 			# Update the post
-			$this->db->query('UPDATE '.$this->db->prefix.'posts SET message=\''.$this->db->escape($message).'\', hide_smilies=\''.$hide_smilies.'\''.$edited_sql.' WHERE id='.$id) or $this->fatal_error('Unable to update post', __FILE__, __LINE__, $this->db->error());
+			$this->db->query('UPDATE '.$this->db->prefix.'posts SET message=\''.$this->db->escape($message).'\', hide_smilies=\''.$hide_smilies.'\''.$edited_sql.' WHERE id='.$post_id) or $this->fatal_error('Unable to update post', __FILE__, __LINE__, $this->db->error());
 		}
 	
 		return true;
