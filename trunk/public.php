@@ -180,7 +180,7 @@ class punsapi extends punsapi_core
 		if ($cache = $this->_get_cache('get_user_infos', $user_id))
 			return $cache;
 		else {
-			$result = $this->db->query('SELECT u.*, g.*, o.logged, o.idle FROM '.$this->db->prefix.'users AS u INNER JOIN '.$this->db->prefix.'groups AS g ON u.group_id=g.g_id LEFT JOIN '.$this->db->prefix.'online AS o ON o.user_id=u.id WHERE u.id='.$user_id) or $this->fatal_error('Unable to fetch user information', __FILE__, __LINE__, $this->db->error());
+			$result = $this->db->query('SELECT u.*, g.*, o.logged, o.idle FROM '.$this->db->prefix.'users AS u INNER JOIN '.$this->db->prefix.'groups AS g ON u.group_id=g.g_id LEFT JOIN '.$this->db->prefix.'online AS o ON o.user_id=u.id WHERE u.id='.$user_id) or $this->fatal_error('Unable to fetch user information',__FILE__,__LINE__,$this->db->error());
 			$user = $this->db->fetch_assoc($result);
 			
 			$this->_set_cache('get_user_infos', $user_id, $user);
@@ -210,7 +210,7 @@ class punsapi extends punsapi_core
 		$this->load_lang('register');
 
 		# Check that someone from this IP didn't register a user within the last hour (DoS prevention)
-		$result = $this->db->query('SELECT 1 FROM '.$this->db->prefix.'users WHERE registration_ip=\''.$_SERVER['REMOTE_ADDR'].'\' AND registered>'.(time() - 3600)) or $this->fatal_error('Unable to fetch user info', __FILE__, __LINE__, $this->db->error());
+		$result = $this->db->query('SELECT 1 FROM '.$this->db->prefix.'users WHERE registration_ip=\''.$_SERVER['REMOTE_ADDR'].'\' AND registered>'.(time() - 3600)) or $this->fatal_error('Unable to fetch user info',__FILE__,__LINE__,$this->db->error());
 
 		if ($this->db->num_rows($result))
 		{
@@ -290,7 +290,7 @@ class punsapi extends punsapi_core
 		}
 
 		# Check that the username (or a too similar username) is not already registered
-		$result = $this->db->query('SELECT username FROM '.$this->db->prefix.'users WHERE UPPER(username)=UPPER(\''.$this->db->escape($username).'\') OR UPPER(username)=UPPER(\''.$this->db->escape(preg_replace('/[^\w]/', '', $username)).'\')') or $this->fatal_error('Unable to fetch user info', __FILE__, __LINE__, $this->db->error());
+		$result = $this->db->query('SELECT username FROM '.$this->db->prefix.'users WHERE UPPER(username)=UPPER(\''.$this->db->escape($username).'\') OR UPPER(username)=UPPER(\''.$this->db->escape(preg_replace('/[^\w]/', '', $username)).'\')') or $this->fatal_error('Unable to fetch user info',__FILE__,__LINE__,$this->db->error());
 
 		if ($this->db->num_rows($result))
 		{
@@ -328,7 +328,7 @@ class punsapi extends punsapi_core
 		# Check if someone else already has registered with that e-mail address
 		$dupe_list = array();
 
-		$result = $this->db->query('SELECT username FROM '.$this->db->prefix.'users WHERE email=\''.$email1.'\'') or $this->fatal_error('Unable to fetch user info', __FILE__, __LINE__, $this->db->error());
+		$result = $this->db->query('SELECT username FROM '.$this->db->prefix.'users WHERE email=\''.$email1.'\'') or $this->fatal_error('Unable to fetch user info',__FILE__,__LINE__,$this->db->error());
 		if ($this->db->num_rows($result))
 		{
 			if ($this->config['p_allow_dupe_email'] == '0')
@@ -371,7 +371,7 @@ class punsapi extends punsapi_core
 		$password_hash = $this->_hash($password1);
 	
 		# Add the user
-		$this->db->query('INSERT INTO '.$this->db->prefix.'users (username, group_id, password, email, email_setting, save_pass, timezone, language, style, registered, registration_ip, last_visit) VALUES(\''.$this->db->escape($username).'\', '.$intial_group_id.', \''.$password_hash.'\', \''.$email1.'\', '.$email_setting.', '.$save_pass.', '.$timezone.' , \''.$this->db->escape($language).'\', \''.$this->config['o_default_style'].'\', '.$now.', \''.$_SERVER['REMOTE_ADDR'].'\', '.$now.')') or $this->fatal_error('Unable to create user', __FILE__, __LINE__, $this->db->error());
+		$this->db->query('INSERT INTO '.$this->db->prefix.'users (username, group_id, password, email, email_setting, save_pass, timezone, language, style, registered, registration_ip, last_visit) VALUES(\''.$this->db->escape($username).'\', '.$intial_group_id.', \''.$password_hash.'\', \''.$email1.'\', '.$email_setting.', '.$save_pass.', '.$timezone.' , \''.$this->db->escape($language).'\', \''.$this->config['o_default_style'].'\', '.$now.', \''.$_SERVER['REMOTE_ADDR'].'\', '.$now.')') or $this->fatal_error('Unable to create user',__FILE__,__LINE__,$this->db->error());
 		$new_uid = $this->db->insert_id();
 
 		# If we previously found out that the e-mail was banned
@@ -920,7 +920,7 @@ class punsapi extends punsapi_core
 					$reqPlus .= 'AND g_title=\''.$this->db->escape($group_id).'\' ';
 			}
 
-			$rs = $this->db->select('SELECT * FROM '.$this->db->prefix.'groups '.$reqPlus.'ORDER BY '.$order_by) or $this->fatal_error('Unable to fetch group infos', __FILE__, __LINE__, $this->db->error());
+			$rs = $this->db->select('SELECT * FROM '.$this->db->prefix.'groups '.$reqPlus.'ORDER BY '.$order_by) or $this->fatal_error('Unable to fetch group infos',__FILE__,__LINE__,$this->db->error());
 			
 			$this->_set_cache('get_group_infos', $this->_hash($group_id.$order_by), $rs);
 			return $rs;		
@@ -955,7 +955,7 @@ class punsapi extends punsapi_core
 				$reqPlus .= 'AND forum_name=\''.$this->db->escape($fid).'\' ';
 		}
 
-		$rs = $this->db->select('SELECT * FROM '.$this->db->prefix.'forums '.$reqPlus.'ORDER BY '.$order_by) or $this->fatal_error('Unable to fetch forum infos', __FILE__, __LINE__, $this->db->error());
+		$rs = $this->db->select('SELECT * FROM '.$this->db->prefix.'forums '.$reqPlus.'ORDER BY '.$order_by) or $this->fatal_error('Unable to fetch forum infos',__FILE__,__LINE__,$this->db->error());
 
 		return $rs;
 	}
@@ -984,7 +984,7 @@ class punsapi extends punsapi_core
 				$reqPlus .= 'AND cat_name=\''.$this->db->escape($cid).'\' ';
 		}
 
-		$rs = $this->db->select('SELECT * FROM '.$this->db->prefix.'categories '.$reqPlus.'ORDER BY '.$order_by) or $this->fatal_error('Unable to fetch category infos', __FILE__, __LINE__, $this->db->error());
+		$rs = $this->db->select('SELECT * FROM '.$this->db->prefix.'categories '.$reqPlus.'ORDER BY '.$order_by) or $this->fatal_error('Unable to fetch category infos',__FILE__,__LINE__,$this->db->error());
 
 		return $rs;
 	}
@@ -1027,7 +1027,7 @@ class punsapi extends punsapi_core
 		$reqPlus.
 		'ORDER BY c.disp_position, c.id, f.disp_position';
 
-		$rs = $this->db->select($strReq) or $this->fatal_error('Unable to fetch category/forum list', __FILE__, __LINE__, $this->db->error());
+		$rs = $this->db->select($strReq) or $this->fatal_error('Unable to fetch category/forum list',__FILE__,__LINE__,$this->db->error());
 
 		return $rs;
 	}
@@ -1041,7 +1041,7 @@ class punsapi extends punsapi_core
 	
 	Return a recordset containing topics
 	
-	@param	integer forum_id	Forum(s) from wich extract topics
+	@param	string 	forum_id	Forum(s) from wich extract topics
 	@param	string	limit		Limit number of topic to return
 	@param	string	order_by	How to order result
 	@param	string	sotrt		How to sort results
@@ -1089,7 +1089,7 @@ class punsapi extends punsapi_core
 			$strReq .= 'LIMIT '.$limit.' ';
 		}
 		
-		$rs = $this->db->select($strReq) or $this->fatal_error('Unable to fetch topic list', __FILE__, __LINE__, $this->db->error());
+		$rs = $this->db->select($strReq) or $this->fatal_error('Unable to fetch topic list',__FILE__,__LINE__,$this->db->error());
 		
 		return $rs;
 	}
@@ -1120,7 +1120,7 @@ class punsapi extends punsapi_core
 		$subscribe = ($subscribe == true || $subscribe == 1) ? 1 : 0;
 		
 		# Fetch some infos
-		$cur_posting = $this->db->select('SELECT f.id, f.forum_name, f.moderators, f.redirect_url, fp.post_replies, fp.post_topics FROM '.$this->db->prefix.'forums AS f LEFT JOIN '.$this->db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id='.$this->user['g_id'].') WHERE (fp.read_forum IS NULL OR fp.read_forum=1) AND f.id='.$forum_id) or $this->fatal_error('Unable to fetch forum info', __FILE__, __LINE__, $this->db->error());
+		$cur_posting = $this->db->select('SELECT f.id, f.forum_name, f.moderators, f.redirect_url, fp.post_replies, fp.post_topics FROM '.$this->db->prefix.'forums AS f LEFT JOIN '.$this->db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id='.$this->user['g_id'].') WHERE (fp.read_forum IS NULL OR fp.read_forum=1) AND f.id='.$forum_id) or $this->fatal_error('Unable to fetch forum info',__FILE__,__LINE__,$this->db->error());
 			
 		if ($cur_posting->isEmpty())
 		{
@@ -1177,7 +1177,7 @@ class punsapi extends punsapi_core
 			$now = time();
 			
 			# Create the topic
-			$this->db->query('INSERT INTO '.$this->db->prefix.'topics (poster, subject, posted, last_post, last_poster, forum_id) VALUES(\''.$this->db->escape($username).'\', \''.$this->db->escape($subject).'\', '.$now.', '.$now.', \''.$this->db->escape($username).'\', '.$forum_id.')') or $this->fatal_error('Unable to create topic', __FILE__, __LINE__, $this->db->error());
+			$this->db->query('INSERT INTO '.$this->db->prefix.'topics (poster, subject, posted, last_post, last_poster, forum_id) VALUES(\''.$this->db->escape($username).'\', \''.$this->db->escape($subject).'\', '.$now.', '.$now.', \''.$this->db->escape($username).'\', '.$forum_id.')') or $this->fatal_error('Unable to create topic',__FILE__,__LINE__,$this->db->error());
 			
 			$new_tid = $this->db->insert_id();
 
@@ -1186,24 +1186,24 @@ class punsapi extends punsapi_core
 				# To subscribe or not to subscribe, that ...
 				if ($this->config['o_subscriptions'] == '1' && $subscribe == 1)
 				{
-					$this->db->query('INSERT INTO '.$this->db->prefix.'subscriptions (user_id, topic_id) VALUES('.$this->user['id'].' ,'.$new_tid.')') or $this->fatal_error('Unable to add subscription', __FILE__, __LINE__, $this->db->error());
+					$this->db->query('INSERT INTO '.$this->db->prefix.'subscriptions (user_id, topic_id) VALUES('.$this->user['id'].' ,'.$new_tid.')') or $this->fatal_error('Unable to add subscription',__FILE__,__LINE__,$this->db->error());
 				}
 				
 				# Create the post ("topic post")
-				$this->db->query('INSERT INTO '.$this->db->prefix.'posts (poster, poster_id, poster_ip, message, hide_smilies, posted, topic_id) VALUES(\''.$this->db->escape($username).'\', '.$this->user['id'].', \''.$_SERVER['REMOTE_ADDR'].'\', \''.$this->db->escape($message).'\', \''.$hide_smilies.'\', '.$now.', '.$new_tid.')') or $this->fatal_error('Unable to create post', __FILE__, __LINE__, $this->db->error());
+				$this->db->query('INSERT INTO '.$this->db->prefix.'posts (poster, poster_id, poster_ip, message, hide_smilies, posted, topic_id) VALUES(\''.$this->db->escape($username).'\', '.$this->user['id'].', \''.$_SERVER['REMOTE_ADDR'].'\', \''.$this->db->escape($message).'\', \''.$hide_smilies.'\', '.$now.', '.$new_tid.')') or $this->fatal_error('Unable to create post',__FILE__,__LINE__,$this->db->error());
 				
 				$new_pid = $this->db->insert_id();
 			}
 			else {
 				# Create the post ("topic post")
 				$email_sql = ($this->config['p_force_guest_email'] == '1' || $email != '') ? '\''.$email.'\'' : 'NULL';
-				$this->db->query('INSERT INTO '.$this->db->prefix.'posts (poster, poster_ip, poster_email, message, hide_smilies, posted, topic_id) VALUES(\''.$this->db->escape($username).'\', \''.$_SERVER['REMOTE_ADDR'].'\', '.$email_sql.', \''.$this->db->escape($message).'\', \''.$hide_smilies.'\', '.$now.', '.$new_tid.')') or $this->fatal_error('Unable to create post', __FILE__, __LINE__, $this->db->error());
+				$this->db->query('INSERT INTO '.$this->db->prefix.'posts (poster, poster_ip, poster_email, message, hide_smilies, posted, topic_id) VALUES(\''.$this->db->escape($username).'\', \''.$_SERVER['REMOTE_ADDR'].'\', '.$email_sql.', \''.$this->db->escape($message).'\', \''.$hide_smilies.'\', '.$now.', '.$new_tid.')') or $this->fatal_error('Unable to create post',__FILE__,__LINE__,$this->db->error());
 				
 				$new_pid = $this->db->insert_id();
 			}
 			
 			# Update the topic with last_post_id
-			$this->db->query('UPDATE '.$this->db->prefix.'topics SET last_post_id='.$new_pid.' WHERE id='.$new_tid) or $this->fatal_error('Unable to update topic', __FILE__, __LINE__, $this->db->error());
+			$this->db->query('UPDATE '.$this->db->prefix.'topics SET last_post_id='.$new_pid.' WHERE id='.$new_tid) or $this->fatal_error('Unable to update topic',__FILE__,__LINE__,$this->db->error());
 							
 			$this->_update_search_index('post', $new_pid, $message, $subject);
 	
@@ -1213,7 +1213,7 @@ class punsapi extends punsapi_core
 			if (!$this->user['is_guest'] && $increment)
 			{
 				$low_prio = ($this->conf['db_type'] == 'mysql') ? 'LOW_PRIORITY ' : '';
-				$this->db->query('UPDATE '.$low_prio.$this->db->prefix.'users SET num_posts=num_posts+1, last_post='.$now.' WHERE id='.$this->user['id']) or $this->fatal_error('Unable to update user', __FILE__, __LINE__, $this->db->error());
+				$this->db->query('UPDATE '.$low_prio.$this->db->prefix.'users SET num_posts=num_posts+1, last_post='.$now.' WHERE id='.$this->user['id']) or $this->fatal_error('Unable to update user',__FILE__,__LINE__,$this->db->error());
 			}
 			
 			return array('tid' => $new_tid, 'pid' => $new_pid);
@@ -1250,7 +1250,7 @@ class punsapi extends punsapi_core
 	*/
 	function del_topic($topic_id,$bypassperm=false)
 	{
-		$result = $this->db->query('SELECT id FROM '.$this->db->prefix.'posts WHERE topic_id='.intval($topic_id).' ORDER BY posted LIMIT 1') or $this->fatal_error('Unable to fetch post info', __FILE__, __LINE__, $this->db->error());
+		$result = $this->db->query('SELECT id FROM '.$this->db->prefix.'posts WHERE topic_id='.intval($topic_id).' ORDER BY posted LIMIT 1') or $this->fatal_error('Unable to fetch post info',__FILE__,__LINE__,$this->db->error());
 		$topic_post_id = $this->db->result($result);
 
 		return $this->del_post($topic_post_id,$bypassperm);
@@ -1322,7 +1322,7 @@ class punsapi extends punsapi_core
 	{
 		$strReq = $this->get_post_sql($tid,'',$limit,$order_by,$npid);
 		
-		$rs = $this->db->select($strReq) or $this->fatal_error('Unable to fetch topic posts', __FILE__, __LINE__, $this->db->error());
+		$rs = $this->db->select($strReq) or $this->fatal_error('Unable to fetch topic posts',__FILE__,__LINE__,$this->db->error());
 		
 		return $rs;		
 	}
@@ -1342,7 +1342,7 @@ class punsapi extends punsapi_core
 		else {
 			$strReq = $this->get_post_sql('',$pid,1,'p.id');
 					
-			$rs = $this->db->select($strReq) or $this->fatal_error('Unable to fetch post infos', __FILE__, __LINE__, $this->db->error());
+			$rs = $this->db->select($strReq) or $this->fatal_error('Unable to fetch post infos',__FILE__,__LINE__,$this->db->error());
 			
 			$this->_set_cache('get_post_infos', $pid, $rs);
 			return $rs;		
@@ -1387,7 +1387,7 @@ class punsapi extends punsapi_core
 		'LEFT JOIN '.$this->db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id='.$this->user['g_id'].') '.
 		'WHERE (fp.read_forum IS NULL OR fp.read_forum=1) AND t.id='.$tid;
 		
-		$cur_posting = $this->db->select($strReq) or $this->fatal_error('Unable to fetch topic infos', __FILE__, __LINE__, $this->db->error());
+		$cur_posting = $this->db->select($strReq) or $this->fatal_error('Unable to fetch topic infos',__FILE__,__LINE__,$this->db->error());
 					
 		if ($cur_posting->isEmpty())
 		{
@@ -1440,34 +1440,34 @@ class punsapi extends punsapi_core
 			if (!$this->user['is_guest'])
 			{
 				# Insert the new post
-				$this->db->query('INSERT INTO '.$this->db->prefix.'posts (poster, poster_id, poster_ip, message, hide_smilies, posted, topic_id) VALUES(\''.$this->db->escape($username).'\', '.$this->user['id'].', \''.$_SERVER['REMOTE_ADDR'].'\', \''.$this->db->escape($message).'\', \''.$hide_smilies.'\', '.$now.', '.$tid.')') or $this->fatal_error('Unable to create post', __FILE__, __LINE__, $this->db->error());
+				$this->db->query('INSERT INTO '.$this->db->prefix.'posts (poster, poster_id, poster_ip, message, hide_smilies, posted, topic_id) VALUES(\''.$this->db->escape($username).'\', '.$this->user['id'].', \''.$_SERVER['REMOTE_ADDR'].'\', \''.$this->db->escape($message).'\', \''.$hide_smilies.'\', '.$now.', '.$tid.')') or $this->fatal_error('Unable to create post',__FILE__,__LINE__,$this->db->error());
 				
 				$new_pid = $this->db->insert_id();
 
 				# To subscribe or not to subscribe, that ...
 				if ($this->config['o_subscriptions'] == '1' && $subscribe)
 				{
-					$result = $this->db->select('SELECT 1 FROM '.$this->db->prefix.'subscriptions WHERE user_id='.$this->user['id'].' AND topic_id='.$tid) or $this->fatal_error('Unable to fetch subscription info', __FILE__, __LINE__, $this->db->error());
+					$result = $this->db->select('SELECT 1 FROM '.$this->db->prefix.'subscriptions WHERE user_id='.$this->user['id'].' AND topic_id='.$tid) or $this->fatal_error('Unable to fetch subscription info',__FILE__,__LINE__,$this->db->error());
 					
 					if ($result->isEmpty())
-						$this->db->query('INSERT INTO '.$this->db->prefix.'subscriptions (user_id, topic_id) VALUES('.$this->user['id'].' ,'.$tid.')') or $this->fatal_error('Unable to add subscription', __FILE__, __LINE__, $this->db->error());
+						$this->db->query('INSERT INTO '.$this->db->prefix.'subscriptions (user_id, topic_id) VALUES('.$this->user['id'].' ,'.$tid.')') or $this->fatal_error('Unable to add subscription',__FILE__,__LINE__,$this->db->error());
 				}
 			}
 			else
 			{
 				# It's a guest. Insert the new post
 				$email_sql = ($this->config['p_force_guest_email'] == '1' || $email != '') ? '\''.$email.'\'' : 'NULL';
-				$this->db->query('INSERT INTO '.$this->db->prefix.'posts (poster, poster_ip, poster_email, message, hide_smilies, posted, topic_id) VALUES(\''.$this->db->escape($username).'\', \''.$_SERVER['REMOTE_ADDR'].'\', '.$email_sql.', \''.$this->db->escape($message).'\', \''.$hide_smilies.'\', '.$now.', '.$tid.')') or $this->fatal_error('Unable to create post', __FILE__, __LINE__, $this->db->error());
+				$this->db->query('INSERT INTO '.$this->db->prefix.'posts (poster, poster_ip, poster_email, message, hide_smilies, posted, topic_id) VALUES(\''.$this->db->escape($username).'\', \''.$_SERVER['REMOTE_ADDR'].'\', '.$email_sql.', \''.$this->db->escape($message).'\', \''.$hide_smilies.'\', '.$now.', '.$tid.')') or $this->fatal_error('Unable to create post',__FILE__,__LINE__,$this->db->error());
 				
 				$new_pid = $this->db->insert_id();
 			}
 
 			# Count number of replies in the topic
-			$result = $this->db->select('SELECT COUNT(id) AS num_replies FROM '.$this->db->prefix.'posts WHERE topic_id='.$tid) or $this->fatal_error('Unable to fetch post count for topic', __FILE__, __LINE__, $this->db->error());
+			$result = $this->db->select('SELECT COUNT(id) AS num_replies FROM '.$this->db->prefix.'posts WHERE topic_id='.$tid) or $this->fatal_error('Unable to fetch post count for topic',__FILE__,__LINE__,$this->db->error());
 			$num_replies = $result->f('num_replies') - 1;
 
 			# Update topic
-			$this->db->query('UPDATE '.$this->db->prefix.'topics SET num_replies='.$num_replies.', last_post='.$now.', last_post_id='.$new_pid.', last_poster=\''.$this->db->escape($username).'\' WHERE id='.$tid) or $this->fatal_error('Unable to update topic', __FILE__, __LINE__, $this->db->error());
+			$this->db->query('UPDATE '.$this->db->prefix.'topics SET num_replies='.$num_replies.', last_post='.$now.', last_post_id='.$new_pid.', last_poster=\''.$this->db->escape($username).'\' WHERE id='.$tid) or $this->fatal_error('Unable to update topic',__FILE__,__LINE__,$this->db->error());
 
 			$this->_update_search_index('post', $new_pid, $message);
 
@@ -1477,11 +1477,11 @@ class punsapi extends punsapi_core
 			if ($this->config['o_subscriptions'] == '1')
 			{
 				# Get the post time for the previous post in this topic
-				$result = $this->db->select('SELECT posted FROM '.$this->db->prefix.'posts WHERE topic_id='.$tid.' ORDER BY id DESC LIMIT 1, 1') or $this->fatal_error('Unable to fetch post info', __FILE__, __LINE__, $this->db->error());
+				$result = $this->db->select('SELECT posted FROM '.$this->db->prefix.'posts WHERE topic_id='.$tid.' ORDER BY id DESC LIMIT 1, 1') or $this->fatal_error('Unable to fetch post info',__FILE__,__LINE__,$this->db->error());
 				$previous_post_time = $result->f('posted');
 
 				# Get any subscribed users that should be notified (banned users are excluded)
-				$subscriber = $this->db->select('SELECT u.id, u.email, u.notify_with_post, u.language FROM '.$this->db->prefix.'users AS u INNER JOIN '.$this->db->prefix.'subscriptions AS s ON u.id=s.user_id LEFT JOIN '.$this->db->prefix.'forum_perms AS fp ON (fp.forum_id='.$cur_posting->f('id').' AND fp.group_id=u.group_id) LEFT JOIN '.$this->db->prefix.'online AS o ON u.id=o.user_id LEFT JOIN '.$this->db->prefix.'bans AS b ON u.username=b.username WHERE b.username IS NULL AND COALESCE(o.logged, u.last_visit)>'.$previous_post_time.' AND (fp.read_forum IS NULL OR fp.read_forum=1) AND s.topic_id='.$tid.' AND u.id!='.intval($this->user['id'])) or $this->fatal_error('Unable to fetch subscription info', __FILE__, __LINE__, $this->db->error());
+				$subscriber = $this->db->select('SELECT u.id, u.email, u.notify_with_post, u.language FROM '.$this->db->prefix.'users AS u INNER JOIN '.$this->db->prefix.'subscriptions AS s ON u.id=s.user_id LEFT JOIN '.$this->db->prefix.'forum_perms AS fp ON (fp.forum_id='.$cur_posting->f('id').' AND fp.group_id=u.group_id) LEFT JOIN '.$this->db->prefix.'online AS o ON u.id=o.user_id LEFT JOIN '.$this->db->prefix.'bans AS b ON u.username=b.username WHERE b.username IS NULL AND COALESCE(o.logged, u.last_visit)>'.$previous_post_time.' AND (fp.read_forum IS NULL OR fp.read_forum=1) AND s.topic_id='.$tid.' AND u.id!='.intval($this->user['id'])) or $this->fatal_error('Unable to fetch subscription info',__FILE__,__LINE__,$this->db->error());
 				
 				if (!$subscriber->isEmpty())
 				{
@@ -1551,7 +1551,7 @@ class punsapi extends punsapi_core
 		if (!$this->user['is_guest'] && $increment)
 		{
 			$low_prio = ($this->conf['db_type'] == 'mysql') ? 'LOW_PRIORITY ' : '';
-			$this->db->query('UPDATE '.$low_prio.$this->db->prefix.'users SET num_posts=num_posts+1, last_post='.$now.' WHERE id='.$this->user['id']) or $this->fatal_error('Unable to update user', __FILE__, __LINE__, $this->db->error());
+			$this->db->query('UPDATE '.$low_prio.$this->db->prefix.'users SET num_posts=num_posts+1, last_post='.$now.' WHERE id='.$this->user['id']) or $this->fatal_error('Unable to update user',__FILE__,__LINE__,$this->db->error());
 		}
 		
 		return $new_pid;
@@ -1578,7 +1578,7 @@ class punsapi extends punsapi_core
 		$hide_smilies = ($hide_smilies == true || $hide_smilies == 1) ? 1 : 0;
 
 		# Fetch some info about the post, the topic and the forum
-		$cur_post = $this->db->select('SELECT f.id AS fid, f.forum_name, f.moderators, f.redirect_url, fp.post_replies, fp.post_topics, t.id AS tid, t.subject, t.posted, t.closed, p.poster, p.poster_id, p.message, p.hide_smilies FROM '.$this->db->prefix.'posts AS p INNER JOIN '.$this->db->prefix.'topics AS t ON t.id=p.topic_id INNER JOIN '.$this->db->prefix.'forums AS f ON f.id=t.forum_id LEFT JOIN '.$this->db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id='.$this->user['g_id'].') WHERE (fp.read_forum IS NULL OR fp.read_forum=1) AND p.id='.$post_id) or $this->fatal_error('Unable to fetch post info', __FILE__, __LINE__, $this->db->error());
+		$cur_post = $this->db->select('SELECT f.id AS fid, f.forum_name, f.moderators, f.redirect_url, fp.post_replies, fp.post_topics, t.id AS tid, t.subject, t.posted, t.closed, p.poster, p.poster_id, p.message, p.hide_smilies FROM '.$this->db->prefix.'posts AS p INNER JOIN '.$this->db->prefix.'topics AS t ON t.id=p.topic_id INNER JOIN '.$this->db->prefix.'forums AS f ON f.id=t.forum_id LEFT JOIN '.$this->db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id='.$this->user['g_id'].') WHERE (fp.read_forum IS NULL OR fp.read_forum=1) AND p.id='.$post_id) or $this->fatal_error('Unable to fetch post info',__FILE__,__LINE__,$this->db->error());
 			
 		if ($cur_post->isEmpty())
 		{
@@ -1591,7 +1591,7 @@ class punsapi extends punsapi_core
 		$is_admmod = ($this->user['g_id'] == PUN_ADMIN || ($this->user['g_id'] == PUN_MOD && array_key_exists($this->user['username'], $mods_array))) ? true : false;
 		
 		# Determine whether this post is the "topic post" or not
-		$rs = $this->db->select('SELECT id FROM '.$this->db->prefix.'posts WHERE topic_id='.$cur_post->f('tid').' ORDER BY posted LIMIT 1') or $this->fatal_error('Unable to fetch post info', __FILE__, __LINE__, $this->db->error());
+		$rs = $this->db->select('SELECT id FROM '.$this->db->prefix.'posts WHERE topic_id='.$cur_post->f('tid').' ORDER BY posted LIMIT 1') or $this->fatal_error('Unable to fetch post info',__FILE__,__LINE__,$this->db->error());
 		$topic_post_id = $rs->f('id');
 		
 		$can_edit_subject = ($post_id == $topic_post_id && (($this->user['g_edit_subjects_interval'] == '0' || (time() - $cur_post->f('posted')) < $this->user['g_edit_subjects_interval']) || $is_admmod)) ? true : false;
@@ -1630,7 +1630,7 @@ class punsapi extends punsapi_core
 			if ($can_edit_subject)
 			{
 				# Update the topic and any redirect topics
-				$this->db->query('UPDATE '.$this->db->prefix.'topics SET subject=\''.$this->db->escape($subject).'\' WHERE id='.$cur_post->f('tid').' OR moved_to='.$cur_post->f('tid')) or $this->fatal_error('Unable to update topic', __FILE__, __LINE__, $this->db->error());
+				$this->db->query('UPDATE '.$this->db->prefix.'topics SET subject=\''.$this->db->escape($subject).'\' WHERE id='.$cur_post->f('tid').' OR moved_to='.$cur_post->f('tid')) or $this->fatal_error('Unable to update topic',__FILE__,__LINE__,$this->db->error());
 	
 				# We changed the subject, so we need to take that into account when we update the search words
 				$this->_update_search_index('edit', $post_id, $message, $subject);
@@ -1639,7 +1639,7 @@ class punsapi extends punsapi_core
 				$this->_update_search_index('edit', $post_id, $message);
 	
 			# Update the post
-			$this->db->query('UPDATE '.$this->db->prefix.'posts SET message=\''.$this->db->escape($message).'\', hide_smilies=\''.$hide_smilies.'\''.$edited_sql.' WHERE id='.$post_id) or $this->fatal_error('Unable to update post', __FILE__, __LINE__, $this->db->error());
+			$this->db->query('UPDATE '.$this->db->prefix.'posts SET message=\''.$this->db->escape($message).'\', hide_smilies=\''.$hide_smilies.'\''.$edited_sql.' WHERE id='.$post_id) or $this->fatal_error('Unable to update post',__FILE__,__LINE__,$this->db->error());
 		}
 	
 		return true;
@@ -1660,7 +1660,7 @@ class punsapi extends punsapi_core
 		$post_id = intval($post_id);
 		
 		# Fetch some info about the post, the topic and the forum
-		$result = $this->db->query('SELECT f.id AS fid, f.forum_name, f.moderators, f.redirect_url, fp.post_replies, fp.post_topics, t.id AS tid, t.subject, t.posted, t.closed, p.poster, p.poster_id, p.message, p.hide_smilies FROM '.$this->db->prefix.'posts AS p INNER JOIN '.$this->db->prefix.'topics AS t ON t.id=p.topic_id INNER JOIN '.$this->db->prefix.'forums AS f ON f.id=t.forum_id LEFT JOIN '.$this->db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id='.$this->user['g_id'].') WHERE (fp.read_forum IS NULL OR fp.read_forum=1) AND p.id='.$post_id) or $this->fatal_error('Unable to fetch post info', __FILE__, __LINE__, $this->db->error());
+		$result = $this->db->query('SELECT f.id AS fid, f.forum_name, f.moderators, f.redirect_url, fp.post_replies, fp.post_topics, t.id AS tid, t.subject, t.posted, t.closed, p.poster, p.poster_id, p.message, p.hide_smilies FROM '.$this->db->prefix.'posts AS p INNER JOIN '.$this->db->prefix.'topics AS t ON t.id=p.topic_id INNER JOIN '.$this->db->prefix.'forums AS f ON f.id=t.forum_id LEFT JOIN '.$this->db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id='.$this->user['g_id'].') WHERE (fp.read_forum IS NULL OR fp.read_forum=1) AND p.id='.$post_id) or $this->fatal_error('Unable to fetch post info',__FILE__,__LINE__,$this->db->error());
 		
 		if (!$this->db->num_rows($result))
 		{
@@ -1675,7 +1675,7 @@ class punsapi extends punsapi_core
 		$is_admmod = ($this->user['g_id'] == PUN_ADMIN || ($this->user['g_id'] == PUN_MOD && array_key_exists($this->user['username'], $mods_array))) ? true : false;
 		
 		# Determine whether this post is the "topic post" or not
-		$result = $this->db->query('SELECT id FROM '.$this->db->prefix.'posts WHERE topic_id='.$cur_post['tid'].' ORDER BY posted LIMIT 1') or $this->fatal_error('Unable to fetch post info', __FILE__, __LINE__, $this->db->error());
+		$result = $this->db->query('SELECT id FROM '.$this->db->prefix.'posts WHERE topic_id='.$cur_post['tid'].' ORDER BY posted LIMIT 1') or $this->fatal_error('Unable to fetch post info',__FILE__,__LINE__,$this->db->error());
 		$topic_post_id = $this->db->result($result);
 		
 		$is_topic_post = ($post_id == $topic_post_id) ? true : false;
@@ -1746,7 +1746,7 @@ class punsapi extends punsapi_core
 			$strReq .= ' LIMIT '.$limit.' ';
 		}
 
-		$rs = $this->db->select($strReq) or $this->fatal_error('Unable to fetch news', __FILE__, __LINE__, $this->db->error());
+		$rs = $this->db->select($strReq) or $this->fatal_error('Unable to fetch news',__FILE__,__LINE__,$this->db->error());
 
 		return $rs;		
 	}
@@ -1977,7 +1977,7 @@ class punsapi extends punsapi_core
 		if ($cache = $this->_get_cache('get_total_users', 'foo'))
 			$total_users = $cache;
 		else {
-			$result = $this->db->query('SELECT COUNT(id)-1 FROM '.$this->db->prefix.'users') or $this->fatal_error('Unable to fetch total user count', __FILE__, __LINE__, $this->db->error());
+			$result = $this->db->query('SELECT COUNT(id)-1 FROM '.$this->db->prefix.'users') or $this->fatal_error('Unable to fetch total user count',__FILE__,__LINE__,$this->db->error());
 			$total_users = (integer) $this->db->result($result);
 			
 			$this->_set_cache('get_total_users', 'foo', $total_users);
@@ -2001,7 +2001,7 @@ class punsapi extends punsapi_core
 		if ($cache = $this->_get_cache('get_last_user', 'foo'))
 			return $cache;
 		else {
-			$result = $this->db->query('SELECT id, username FROM '.$this->db->prefix.'users ORDER BY registered DESC LIMIT 1') or $this->fatal_error('Unable to fetch newest registered user', __FILE__, __LINE__, $this->db->error());
+			$result = $this->db->query('SELECT id, username FROM '.$this->db->prefix.'users ORDER BY registered DESC LIMIT 1') or $this->fatal_error('Unable to fetch newest registered user',__FILE__,__LINE__,$this->db->error());
 			$last_user = $this->db->fetch_assoc($result);
 			
 			$this->_set_cache('get_last_user', 'foo', $last_user);
@@ -2021,7 +2021,7 @@ class punsapi extends punsapi_core
 		if ($cache = $this->_get_cache('get_totals_topics_and_posts', 'foo'))
 			return $cache;
 		else {
-			$result = $this->db->query('SELECT SUM(num_topics) AS total_topics, SUM(num_posts) AS total_posts FROM '.$this->db->prefix.'forums') or $this->fatal_error('Unable to fetch topic/post count', __FILE__, __LINE__, $this->db->error());
+			$result = $this->db->query('SELECT SUM(num_topics) AS total_topics, SUM(num_posts) AS total_posts FROM '.$this->db->prefix.'forums') or $this->fatal_error('Unable to fetch topic/post count',__FILE__,__LINE__,$this->db->error());
 			$totals = $this->db->fetch_assoc($result);
 			
 			$this->_set_cache('get_totals_topics_and_posts', 'foo', $totals);
@@ -2103,7 +2103,7 @@ class punsapi extends punsapi_core
 		# If not already built in a previous call, build an array of censor words and their replacement text
 		if (!isset($search_for))
 		{
-			$result = $this->db->query('SELECT search_for, replace_with FROM '.$this->db->prefix.'censoring')  or $this->fatal_error('Unable to fetch censor word list', __FILE__, __LINE__, $this->db->error());
+			$result = $this->db->query('SELECT search_for, replace_with FROM '.$this->db->prefix.'censoring')  or $this->fatal_error('Unable to fetch censor word list',__FILE__,__LINE__,$this->db->error());
 			$num_words = $this->db->num_rows($result);
 	
 			$search_for = array();
@@ -2488,21 +2488,21 @@ class punsapi extends punsapi_core
 		# Set a default title if the script failed before $this->config could be populated
 		if (empty($this->config))
 			$this->config['o_board_title'] = 'PunBB';
-	
+
 		# Empty all output buffers and stop buffering
 		while (@ob_end_clean());
-	
+
 		# "Restart" output buffering if we are using ob_gzhandler (since the gzip header is already sent)
 		if (!empty($this->config['o_gzip']) && extension_loaded('zlib') && (strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') !== false || strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'deflate') !== false))
 			ob_start('ob_gzhandler');
-		
+
 		# Display fatal error page
 		require dirname(__FILE__).'/fatal_error.php';
-			
+
 		# If a database connection was established (before this error) we close it
 		if ($db_error) 
 			$this->db->close();
-	
+
 		exit;
 	}
 

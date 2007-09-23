@@ -23,7 +23,7 @@
 
 /**
 @class		punsapi_core
-@version	0.3 for PunBB 1.2.x
+@version	0.4 for PunBB 1.2.x
 @author 	Vincent Garnier
 
 A "toolbox class" to play with PunBB on your website :)
@@ -61,7 +61,7 @@ class punsapi_core
 	var $mod_puntoolbar;
 	
 	/**
-	@function	pun_api
+	@function	punsapi_core
 	
 	"Constructor"
 	
@@ -108,31 +108,31 @@ class punsapi_core
 			error_reporting(E_ALL ^ E_NOTICE);
 
 		# Get config
-		if (file_exists($this->pun_root.'config.php'))
+		if (!defined('PUN') && file_exists($this->pun_root.'config.php'))
 			require $this->pun_root.'config.php';
 
 		if (!defined('PUN'))
 			$this->fatal_error('The file \'config.php\' doesn\'t exist or is corrupt.',__FILE__,__LINE__);
-		
+
 		# If a cookie name is not specified in config.php, we use the default (punbb_cookie)
 		if (empty($cookie_name))
 			$cookie_name = 'punbb_cookie';
 		
 		# For convenience, duplicate conf data
 		$this->conf = array();
-		$this->conf['db_type'] = &$db_type;
-		$this->conf['db_host'] = &$db_host;
-		$this->conf['db_name'] = &$db_name;
-		$this->conf['db_username'] = &$db_username;
-		$this->conf['db_password'] = &$db_password;
-		$this->conf['db_prefix'] = &$db_prefix;
-		$this->conf['p_connect'] = &$p_connect;
+		$this->conf['db_type'] = &$GLOBALS['db_type'];
+		$this->conf['db_host'] = &$GLOBALS['db_host'];
+		$this->conf['db_name'] = &$GLOBALS['db_name'];
+		$this->conf['db_username'] = &$GLOBALS['db_username'];
+		$this->conf['db_password'] = &$GLOBALS['db_password'];
+		$this->conf['db_prefix'] = &$GLOBALS['db_prefix'];
+		$this->conf['p_connect'] = &$GLOBALS['p_connect'];
 
-		$this->conf['cookie_name'] = &$cookie_name;
-		$this->conf['cookie_domain'] = &$cookie_domain;
-		$this->conf['cookie_path'] = &$cookie_path;
-		$this->conf['cookie_secure'] = &$cookie_secure;
-		$this->conf['cookie_seed'] = &$cookie_seed;
+		$this->conf['cookie_name'] = &$GLOBALS['cookie_name'];
+		$this->conf['cookie_domain'] = &$GLOBALS['cookie_domain'];
+		$this->conf['cookie_path'] = &$GLOBALS['cookie_path'];
+		$this->conf['cookie_secure'] = &$GLOBALS['cookie_secure'];
+		$this->conf['cookie_seed'] = &$GLOBALS['cookie_seed'];
 
 		# Turn off magic_quotes_runtime
 		set_magic_quotes_runtime(0);
@@ -159,7 +159,7 @@ class punsapi_core
 		# Load cached config
 		$this->config = array();
 		
-		if (file_exists($this->pun_root.'cache/cache_config.php'))
+		if (!defined('PUN_CONFIG_LOADED') && file_exists($this->pun_root.'cache/cache_config.php'))
 			require $this->pun_root.'cache/cache_config.php';
 		
 		if (!defined('PUN_CONFIG_LOADED'))
@@ -168,7 +168,7 @@ class punsapi_core
 			require $this->pun_root.'cache/cache_config.php';
 		}
 		
-		$this->config = &$pun_config;
+		$this->config = &$GLOBALS['pun_config'];
 
 		# Enable output buffering
 		if (!$this->options['disable_buffering'])
@@ -197,7 +197,7 @@ class punsapi_core
 		$this->lang['common'] = &$lang_common;
 
 		# Load cached bans
-		if (file_exists($this->pun_root.'cache/cache_bans.php'))
+		if (!defined('PUN_BANS_LOADED') && file_exists($this->pun_root.'cache/cache_bans.php'))
 			require $this->pun_root.'cache/cache_bans.php';
 
 		if (!defined('PUN_BANS_LOADED'))
@@ -206,7 +206,7 @@ class punsapi_core
 			require $this->pun_root.'cache/cache_bans.php';
 		}
 
-		$this->bans = &$pun_bans;
+		$this->bans = &$GLOBALS['pun_bans'];
 
 		# Check if current user is banned
 		if ($this->options['check_bans'])
@@ -301,7 +301,7 @@ class punsapi_core
 				break;
 
 			default:
-				$this->fatal_error('\''.$this->conf['db_type'].'\' is not a valid database type. Please check settings in config.php.', __FILE__, __LINE__);
+				$this->fatal_error('\''.$this->conf['db_type'].'\' is not a valid database type. Please check settings in config.php.',__FILE__,__LINE__);
 				break;
 		}
 
@@ -322,7 +322,7 @@ class punsapi_core
 	{
 		# Get the forum config from the DB
 		$output = array();
-		$result = $this->db->query('SELECT * FROM '.$this->db->prefix.'config', true) or $this->fatal_error('Unable to fetch forum config', __FILE__, __LINE__, $this->db->error());
+		$result = $this->db->query('SELECT * FROM '.$this->db->prefix.'config', true) or $this->fatal_error('Unable to fetch forum config',__FILE__,__LINE__,$this->db->error());
 		while ($cur_config_item = $this->db->fetch_row($result))
 			$output[$cur_config_item[0]] = $cur_config_item[1];
 
@@ -344,7 +344,7 @@ class punsapi_core
 	function _generate_bans_cache()
 	{
 		# Get the ban list from the DB
-		$result = $this->db->query('SELECT * FROM '.$this->db->prefix.'bans', true) or $this->fatal_error('Unable to fetch ban list', __FILE__, __LINE__, $this->db->error());
+		$result = $this->db->query('SELECT * FROM '.$this->db->prefix.'bans', true) or $this->fatal_error('Unable to fetch ban list',__FILE__,__LINE__,$this->db->error());
 
 		$output = array();
 		while ($cur_ban = $this->db->fetch_assoc($result))
@@ -368,7 +368,7 @@ class punsapi_core
 	function _generate_ranks_cache()
 	{
 		# Get the rank list from the DB
-		$result = $this->db->query('SELECT * FROM '.$this->db->prefix.'ranks ORDER BY min_posts', true) or $this->fatal_error('Unable to fetch rank list', __FILE__, __LINE__, $this->db->error());
+		$result = $this->db->query('SELECT * FROM '.$this->db->prefix.'ranks ORDER BY min_posts', true) or $this->fatal_error('Unable to fetch rank list',__FILE__,__LINE__,$this->db->error());
 	
 		$output = array();
 		while ($cur_rank = $this->db->fetch_assoc($result))
@@ -438,7 +438,7 @@ class punsapi_core
 		if ($cookie['user_id'] > 1)
 		{
 			# Check if there's a user with the user ID and password hash from the cookie
-			$result = $this->db->query('SELECT u.*, g.*, o.logged, o.idle FROM '.$this->db->prefix.'users AS u INNER JOIN '.$this->db->prefix.'groups AS g ON u.group_id=g.g_id LEFT JOIN '.$this->db->prefix.'online AS o ON o.user_id=u.id WHERE u.id='.intval($cookie['user_id'])) or $this->fatal_error('Unable to fetch user information', __FILE__, __LINE__, $this->db->error());
+			$result = $this->db->query('SELECT u.*, g.*, o.logged, o.idle FROM '.$this->db->prefix.'users AS u INNER JOIN '.$this->db->prefix.'groups AS g ON u.group_id=g.g_id LEFT JOIN '.$this->db->prefix.'online AS o ON o.user_id=u.id WHERE u.id='.intval($cookie['user_id'])) or $this->fatal_error('Unable to fetch user information',__FILE__,__LINE__,$this->db->error());
 			$this->user = $this->db->fetch_assoc($result);
 
 			# If user authorisation failed
@@ -471,18 +471,18 @@ class punsapi_core
 			{
 				# Update the online list
 				if (!$this->user['logged'])
-					$this->db->query('INSERT INTO '.$this->db->prefix.'online (user_id, ident, logged) VALUES('.$this->user['id'].', \''.$this->db->escape($this->user['username']).'\', '.$now.')') or $this->fatal_error('Unable to insert into online list', __FILE__, __LINE__, $this->db->error());
+					$this->db->query('INSERT INTO '.$this->db->prefix.'online (user_id, ident, logged) VALUES('.$this->user['id'].', \''.$this->db->escape($this->user['username']).'\', '.$now.')') or $this->fatal_error('Unable to insert into online list',__FILE__,__LINE__,$this->db->error());
 				else
 				{
 					# Special case: We've timed out, but no other user has browsed the forums since we timed out
 					if ($this->user['logged'] < ($now-$this->config['o_timeout_visit']))
 					{
-						$this->db->query('UPDATE '.$this->db->prefix.'users SET last_visit='.$this->user['logged'].' WHERE id='.$this->user['id']) or $this->fatal_error('Unable to update user visit data', __FILE__, __LINE__, $this->db->error());
+						$this->db->query('UPDATE '.$this->db->prefix.'users SET last_visit='.$this->user['logged'].' WHERE id='.$this->user['id']) or $this->fatal_error('Unable to update user visit data',__FILE__,__LINE__,$this->db->error());
 						$this->user['last_visit'] = $this->user['logged'];
 					}
 	
 					$idle_sql = ($this->user['idle'] == '1') ? ', idle=0' : '';
-					$this->db->query('UPDATE '.$this->db->prefix.'online SET logged='.$now.$idle_sql.' WHERE user_id='.$this->user['id']) or $this->fatal_error('Unable to update online list', __FILE__, __LINE__, $this->db->error());
+					$this->db->query('UPDATE '.$this->db->prefix.'online SET logged='.$now.$idle_sql.' WHERE user_id='.$this->user['id']) or $this->fatal_error('Unable to update online list',__FILE__,__LINE__,$this->db->error());
 				}
 			}
 
@@ -500,7 +500,7 @@ class punsapi_core
 	function _set_default_user()
 	{
 		# Fetch guest user
-		$result = $this->db->query('SELECT u.*, g.*, o.logged FROM '.$this->db->prefix.'users AS u INNER JOIN '.$this->db->prefix.'groups AS g ON u.group_id=g.g_id LEFT JOIN '.$this->db->prefix.'online AS o ON o.ident=\''.$_SERVER['REMOTE_ADDR'].'\' WHERE u.id=1') or $this->fatal_error('Unable to fetch guest information', __FILE__, __LINE__, $this->db->error());
+		$result = $this->db->query('SELECT u.*, g.*, o.logged FROM '.$this->db->prefix.'users AS u INNER JOIN '.$this->db->prefix.'groups AS g ON u.group_id=g.g_id LEFT JOIN '.$this->db->prefix.'online AS o ON o.ident=\''.$_SERVER['REMOTE_ADDR'].'\' WHERE u.id=1') or $this->fatal_error('Unable to fetch guest information',__FILE__,__LINE__,$this->db->error());
 		if (!$this->db->num_rows($result))
 			exit('Unable to fetch guest information. The table \''.$this->db->prefix.'users\' must contain an entry with id = 1 that represents anonymous users.');
 	
@@ -508,9 +508,9 @@ class punsapi_core
 	
 		# Update online list
 		if (!$this->user['logged'])
-			$this->db->query('INSERT INTO '.$this->db->prefix.'online (user_id, ident, logged) VALUES(1, \''.$this->db->escape($_SERVER['REMOTE_ADDR']).'\', '.time().')') or $this->fatal_error('Unable to insert into online list', __FILE__, __LINE__, $this->db->error());
+			$this->db->query('INSERT INTO '.$this->db->prefix.'online (user_id, ident, logged) VALUES(1, \''.$this->db->escape($_SERVER['REMOTE_ADDR']).'\', '.time().')') or $this->fatal_error('Unable to insert into online list',__FILE__,__LINE__,$this->db->error());
 		else
-			$this->db->query('UPDATE '.$this->db->prefix.'online SET logged='.time().' WHERE ident=\''.$this->db->escape($_SERVER['REMOTE_ADDR']).'\'') or $this->fatal_error('Unable to update online list', __FILE__, __LINE__, $this->db->error());
+			$this->db->query('UPDATE '.$this->db->prefix.'online SET logged='.time().' WHERE ident=\''.$this->db->escape($_SERVER['REMOTE_ADDR']).'\'') or $this->fatal_error('Unable to update online list',__FILE__,__LINE__,$this->db->error());
 	
 		$this->user['disp_topics'] = $this->config['o_disp_topics_default'];
 		$this->user['disp_posts'] = $this->config['o_disp_posts_default'];
@@ -560,14 +560,14 @@ class punsapi_core
 			# Has this ban expired?
 			if ($cur_ban['expire'] != '' && $cur_ban['expire'] <= time())
 			{
-				$this->db->query('DELETE FROM '.$this->db->prefix.'bans WHERE id='.$cur_ban['id']) or $this->fatal_error('Unable to delete expired ban', __FILE__, __LINE__, $this->db->error());
+				$this->db->query('DELETE FROM '.$this->db->prefix.'bans WHERE id='.$cur_ban['id']) or $this->fatal_error('Unable to delete expired ban',__FILE__,__LINE__,$this->db->error());
 				$bans_altered = true;
 				continue;
 			}
 	
 			if ($cur_ban['username'] != '' && !strcasecmp($this->user['username'], $cur_ban['username']))
 			{
-				$this->db->query('DELETE FROM '.$this->db->prefix.'online WHERE ident=\''.$this->db->escape($this->user['username']).'\'') or $this->fatal_error('Unable to delete from online list', __FILE__, __LINE__, $this->db->error());
+				$this->db->query('DELETE FROM '.$this->db->prefix.'online WHERE ident=\''.$this->db->escape($this->user['username']).'\'') or $this->fatal_error('Unable to delete from online list',__FILE__,__LINE__,$this->db->error());
 				
 				$this->fatal_error($this->lang['common']['Ban message'].' '.(($cur_ban['expire'] != '') ? $this->lang['common']['Ban message 2'].' '.strtolower($this->format_time($cur_ban['expire'], true)).'. ' : '').(($cur_ban['message'] != '') ? $this->lang['common']['Ban message 3'].'<br /><br /><strong>'.$this->htmlspecialchars($cur_ban['message']).'</strong><br /><br />' : '<br /><br />').$this->lang['common']['Ban message 4'].' <a href="mailto:'.$this->config['o_admin_email'].'">'.$this->config['o_admin_email'].'</a>.');
 			}
@@ -582,7 +582,7 @@ class punsapi_core
 	
 					if (substr($user_ip, 0, strlen($cur_ban_ips[$i])) == $cur_ban_ips[$i])
 					{
-						$this->db->query('DELETE FROM '.$this->db->prefix.'online WHERE ident=\''.$this->db->escape($this->user['username']).'\'') or $this->fatal_error('Unable to delete from online list', __FILE__, __LINE__, $this->db->error());
+						$this->db->query('DELETE FROM '.$this->db->prefix.'online WHERE ident=\''.$this->db->escape($this->user['username']).'\'') or $this->fatal_error('Unable to delete from online list',__FILE__,__LINE__,$this->db->error());
 						$this->fatal_error($this->lang['common']['Ban message'].' '.(($cur_ban['expire'] != '') ? $this->lang['common']['Ban message 2'].' '.strtolower($this->format_time($cur_ban['expire'], true)).'. ' : '').(($cur_ban['message'] != '') ? $this->lang['common']['Ban message 3'].'<br /><br /><strong>'.$this->htmlspecialchars($cur_ban['message']).'</strong><br /><br />' : '<br /><br />').$this->lang['common']['Ban message 4'].' <a href="mailto:'.$this->config['o_admin_email'].'">'.$this->config['o_admin_email'].'</a>.');
 					}
 				}
@@ -604,22 +604,22 @@ class punsapi_core
 		$now = time();
 	
 		# Fetch all online list entries that are older than "o_timeout_online"
-		$result = $this->db->query('SELECT * FROM '.$this->db->prefix.'online WHERE logged<'.($now-$this->config['o_timeout_online'])) or $this->fatal_error('Unable to fetch old entries from online list', __FILE__, __LINE__, $this->db->error());
+		$result = $this->db->query('SELECT * FROM '.$this->db->prefix.'online WHERE logged<'.($now-$this->config['o_timeout_online'])) or $this->fatal_error('Unable to fetch old entries from online list',__FILE__,__LINE__,$this->db->error());
 		while ($cur_user = $this->db->fetch_assoc($result))
 		{
 			# If the entry is a guest, delete it
 			if ($cur_user['user_id'] == '1')
-				$this->db->query('DELETE FROM '.$this->db->prefix.'online WHERE ident=\''.$this->db->escape($cur_user['ident']).'\'') or $this->fatal_error('Unable to delete from online list', __FILE__, __LINE__, $this->db->error());
+				$this->db->query('DELETE FROM '.$this->db->prefix.'online WHERE ident=\''.$this->db->escape($cur_user['ident']).'\'') or $this->fatal_error('Unable to delete from online list',__FILE__,__LINE__,$this->db->error());
 			else
 			{
 				# If the entry is older than "o_timeout_visit", update last_visit for the user in question, then delete him/her from the online list
 				if ($cur_user['logged'] < ($now-$this->config['o_timeout_visit']))
 				{
-					$this->db->query('UPDATE '.$this->db->prefix.'users SET last_visit='.$cur_user['logged'].' WHERE id='.$cur_user['user_id']) or $this->fatal_error('Unable to update user visit data', __FILE__, __LINE__, $this->db->error());
-					$this->db->query('DELETE FROM '.$this->db->prefix.'online WHERE user_id='.$cur_user['user_id']) or $this->fatal_error('Unable to delete from online list', __FILE__, __LINE__, $this->db->error());
+					$this->db->query('UPDATE '.$this->db->prefix.'users SET last_visit='.$cur_user['logged'].' WHERE id='.$cur_user['user_id']) or $this->fatal_error('Unable to update user visit data',__FILE__,__LINE__,$this->db->error());
+					$this->db->query('DELETE FROM '.$this->db->prefix.'online WHERE user_id='.$cur_user['user_id']) or $this->fatal_error('Unable to delete from online list',__FILE__,__LINE__,$this->db->error());
 				}
 				else if ($cur_user['idle'] == '0')
-					$this->db->query('UPDATE '.$this->db->prefix.'online SET idle=1 WHERE user_id='.$cur_user['user_id']) or $this->fatal_error('Unable to insert into online list', __FILE__, __LINE__, $this->db->error());
+					$this->db->query('UPDATE '.$this->db->prefix.'online SET idle=1 WHERE user_id='.$cur_user['user_id']) or $this->fatal_error('Unable to insert into online list',__FILE__,__LINE__,$this->db->error());
 			}
 		}
 	}
@@ -693,7 +693,7 @@ class punsapi_core
 			}
 	
 			# Check that the username (or a too similar username) is not already registered
-			$busy = $this->db->select('SELECT username FROM '.$this->db->prefix.'users WHERE username=\''.$this->db->escape($username).'\' OR username=\''.$this->db->escape(preg_replace('/[^\w]/', '', $username)).'\'') or $this->fatal_error('Unable to fetch user info', __FILE__, __LINE__, $this->db->error());
+			$busy = $this->db->select('SELECT username FROM '.$this->db->prefix.'users WHERE username=\''.$this->db->escape($username).'\' OR username=\''.$this->db->escape(preg_replace('/[^\w]/', '', $username)).'\'') or $this->fatal_error('Unable to fetch user info',__FILE__,__LINE__,$this->db->error());
 			
 			if (!$busy->isEmpty())
 			{
@@ -1314,7 +1314,7 @@ class punsapi_core
 	
 		if ($mode == 'edit')
 		{
-			$result = $this->db->query('SELECT w.id, w.word, m.subject_match FROM '.$this->db->prefix.'search_words AS w INNER JOIN '.$this->db->prefix.'search_matches AS m ON w.id=m.word_id WHERE m.post_id='.$post_id, true) or $this->fatal_error('Unable to fetch search index words', __FILE__, __LINE__, $this->db->error());
+			$result = $this->db->query('SELECT w.id, w.word, m.subject_match FROM '.$this->db->prefix.'search_words AS w INNER JOIN '.$this->db->prefix.'search_matches AS m ON w.id=m.word_id WHERE m.post_id='.$post_id, true) or $this->fatal_error('Unable to fetch search index words',__FILE__,__LINE__,$this->db->error());
 	
 			# Declare here to stop array_keys() and array_diff() from complaining if not set
 			$cur_words['post'] = array();
@@ -1349,7 +1349,7 @@ class punsapi_core
 	
 		if (!empty($unique_words))
 		{
-			$result = $this->db->query('SELECT id, word FROM '.$this->db->prefix.'search_words WHERE word IN('.implode(',', preg_replace('#^(.*)$#', '\'\1\'', $unique_words)).')', true) or $this->fatal_error('Unable to fetch search index words', __FILE__, __LINE__, $this->db->error());
+			$result = $this->db->query('SELECT id, word FROM '.$this->db->prefix.'search_words WHERE word IN('.implode(',', preg_replace('#^(.*)$#', '\'\1\'', $unique_words)).')', true) or $this->fatal_error('Unable to fetch search index words',__FILE__,__LINE__,$this->db->error());
 	
 			$word_ids = array();
 			while ($row = $this->db->fetch_row($result))
@@ -1366,12 +1366,12 @@ class punsapi_core
 				{
 					case 'mysql':
 					case 'mysqli':
-						$this->db->query('INSERT INTO '.$this->db->prefix.'search_words (word) VALUES'.implode(',', preg_replace('#^(.*)$#', '(\'\1\')', $new_words))) or $this->fatal_error('Unable to insert search index words', __FILE__, __LINE__, $this->db->error());
+						$this->db->query('INSERT INTO '.$this->db->prefix.'search_words (word) VALUES'.implode(',', preg_replace('#^(.*)$#', '(\'\1\')', $new_words))) or $this->fatal_error('Unable to insert search index words',__FILE__,__LINE__,$this->db->error());
 						break;
 	
 					default:
 						while (list(, $word) = @each($new_words))
-							$this->db->query('INSERT INTO '.$this->db->prefix.'search_words (word) VALUES(\''.$word.'\')') or $this->fatal_error('Unable to insert search index words', __FILE__, __LINE__, $this->db->error());
+							$this->db->query('INSERT INTO '.$this->db->prefix.'search_words (word) VALUES(\''.$word.'\')') or $this->fatal_error('Unable to insert search index words',__FILE__,__LINE__,$this->db->error());
 						break;
 				}
 			}
@@ -1390,7 +1390,7 @@ class punsapi_core
 				while (list(, $word) = @each($wordlist))
 					$sql .= (($sql != '') ? ',' : '').$cur_words[$match_in][$word];
 	
-				$this->db->query('DELETE FROM '.$this->db->prefix.'search_matches WHERE word_id IN('.$sql.') AND post_id='.$post_id.' AND subject_match='.$subject_match) or $this->fatal_error('Unable to delete search index word matches', __FILE__, __LINE__, $this->db->error());
+				$this->db->query('DELETE FROM '.$this->db->prefix.'search_matches WHERE word_id IN('.$sql.') AND post_id='.$post_id.' AND subject_match='.$subject_match) or $this->fatal_error('Unable to delete search index word matches',__FILE__,__LINE__,$this->db->error());
 			}
 		}
 	
@@ -1400,7 +1400,7 @@ class punsapi_core
 			$subject_match = ($match_in == 'subject') ? 1 : 0;
 	
 			if (!empty($wordlist))
-				$this->db->query('INSERT INTO '.$this->db->prefix.'search_matches (post_id, word_id, subject_match) SELECT '.$post_id.', id, '.$subject_match.' FROM '.$this->db->prefix.'search_words WHERE word IN('.implode(',', preg_replace('#^(.*)$#', '\'\1\'', $wordlist)).')') or $this->fatal_error('Unable to insert search index word matches', __FILE__, __LINE__, $this->db->error());
+				$this->db->query('INSERT INTO '.$this->db->prefix.'search_matches (post_id, word_id, subject_match) SELECT '.$post_id.', id, '.$subject_match.' FROM '.$this->db->prefix.'search_words WHERE word IN('.implode(',', preg_replace('#^(.*)$#', '\'\1\'', $wordlist)).')') or $this->fatal_error('Unable to insert search index word matches',__FILE__,__LINE__,$this->db->error());
 		}
 	
 		unset($words);
@@ -1418,7 +1418,7 @@ class punsapi_core
 			case 'mysql':
 			case 'mysqli':
 			{
-				$result = $this->db->query('SELECT word_id FROM '.$this->db->prefix.'search_matches WHERE post_id IN('.$post_ids.') GROUP BY word_id') or $this->fatal_error('Unable to fetch search index word match', __FILE__, __LINE__, $this->db->error());
+				$result = $this->db->query('SELECT word_id FROM '.$this->db->prefix.'search_matches WHERE post_id IN('.$post_ids.') GROUP BY word_id') or $this->fatal_error('Unable to fetch search index word match',__FILE__,__LINE__,$this->db->error());
 	
 				if ($this->db->num_rows($result))
 				{
@@ -1426,7 +1426,7 @@ class punsapi_core
 					while ($row = $this->db->fetch_row($result))
 						$word_ids .= ($word_ids != '') ? ','.$row[0] : $row[0];
 	
-					$result = $this->db->query('SELECT word_id FROM '.$this->db->prefix.'search_matches WHERE word_id IN('.$word_ids.') GROUP BY word_id HAVING COUNT(word_id)=1') or $this->fatal_error('Unable to fetch search index word match', __FILE__, __LINE__, $this->db->error());
+					$result = $this->db->query('SELECT word_id FROM '.$this->db->prefix.'search_matches WHERE word_id IN('.$word_ids.') GROUP BY word_id HAVING COUNT(word_id)=1') or $this->fatal_error('Unable to fetch search index word match',__FILE__,__LINE__,$this->db->error());
 	
 					if ($this->db->num_rows($result))
 					{
@@ -1434,7 +1434,7 @@ class punsapi_core
 						while ($row = $this->db->fetch_row($result))
 							$word_ids .= ($word_ids != '') ? ','.$row[0] : $row[0];
 	
-						$this->db->query('DELETE FROM '.$this->db->prefix.'search_words WHERE id IN('.$word_ids.')') or $this->fatal_error('Unable to delete search index word', __FILE__, __LINE__, $this->db->error());
+						$this->db->query('DELETE FROM '.$this->db->prefix.'search_words WHERE id IN('.$word_ids.')') or $this->fatal_error('Unable to delete search index word',__FILE__,__LINE__,$this->db->error());
 					}
 				}
 	
@@ -1442,11 +1442,11 @@ class punsapi_core
 			}
 	
 			default:
-				$this->db->query('DELETE FROM '.$this->db->prefix.'search_words WHERE id IN(SELECT word_id FROM '.$this->db->prefix.'search_matches WHERE word_id IN(SELECT word_id FROM '.$this->db->prefix.'search_matches WHERE post_id IN('.$post_ids.') GROUP BY word_id) GROUP BY word_id HAVING COUNT(word_id)=1)') or $this->fatal_error('Unable to delete from search index', __FILE__, __LINE__, $this->db->error());
+				$this->db->query('DELETE FROM '.$this->db->prefix.'search_words WHERE id IN(SELECT word_id FROM '.$this->db->prefix.'search_matches WHERE word_id IN(SELECT word_id FROM '.$this->db->prefix.'search_matches WHERE post_id IN('.$post_ids.') GROUP BY word_id) GROUP BY word_id HAVING COUNT(word_id)=1)') or $this->fatal_error('Unable to delete from search index',__FILE__,__LINE__,$this->db->error());
 				break;
 		}
 	
-		$this->db->query('DELETE FROM '.$this->db->prefix.'search_matches WHERE post_id IN('.$post_ids.')') or $this->fatal_error('Unable to delete search index word match', __FILE__, __LINE__, $this->db->error());
+		$this->db->query('DELETE FROM '.$this->db->prefix.'search_matches WHERE post_id IN('.$post_ids.')') or $this->fatal_error('Unable to delete search index word match',__FILE__,__LINE__,$this->db->error());
 	}
 
 
@@ -1463,20 +1463,20 @@ class punsapi_core
 	*/
 	function _update_forum($forum_id)
 	{
-		$result = $this->db->query('SELECT COUNT(id), SUM(num_replies) FROM '.$this->db->prefix.'topics WHERE moved_to IS NULL AND forum_id='.$forum_id) or $this->fatal_error('Unable to fetch forum topic count', __FILE__, __LINE__, $this->db->error());
+		$result = $this->db->query('SELECT COUNT(id), SUM(num_replies) FROM '.$this->db->prefix.'topics WHERE moved_to IS NULL AND forum_id='.$forum_id) or $this->fatal_error('Unable to fetch forum topic count',__FILE__,__LINE__,$this->db->error());
 		list($num_topics, $num_posts) = $this->db->fetch_row($result);
 	
 		$num_posts = $num_posts + $num_topics;		# $num_posts is only the sum of all replies (we have to add the topic posts)
 	
-		$result = $this->db->query('SELECT last_post, last_post_id, last_poster FROM '.$this->db->prefix.'topics WHERE forum_id='.$forum_id.' AND moved_to IS NULL ORDER BY last_post DESC LIMIT 1') or $this->fatal_error('Unable to fetch last_post/last_post_id/last_poster', __FILE__, __LINE__, $this->db->error());
+		$result = $this->db->query('SELECT last_post, last_post_id, last_poster FROM '.$this->db->prefix.'topics WHERE forum_id='.$forum_id.' AND moved_to IS NULL ORDER BY last_post DESC LIMIT 1') or $this->fatal_error('Unable to fetch last_post/last_post_id/last_poster',__FILE__,__LINE__,$this->db->error());
 		if ($this->db->num_rows($result))		# There are topics in the forum
 		{
 			list($last_post, $last_post_id, $last_poster) = $this->db->fetch_row($result);
 	
-			$this->db->query('UPDATE '.$this->db->prefix.'forums SET num_topics='.$num_topics.', num_posts='.$num_posts.', last_post='.$last_post.', last_post_id='.$last_post_id.', last_poster=\''.$this->db->escape($last_poster).'\' WHERE id='.$forum_id) or $this->fatal_error('Unable to update last_post/last_post_id/last_poster', __FILE__, __LINE__, $this->db->error());
+			$this->db->query('UPDATE '.$this->db->prefix.'forums SET num_topics='.$num_topics.', num_posts='.$num_posts.', last_post='.$last_post.', last_post_id='.$last_post_id.', last_poster=\''.$this->db->escape($last_poster).'\' WHERE id='.$forum_id) or $this->fatal_error('Unable to update last_post/last_post_id/last_poster',__FILE__,__LINE__,$this->db->error());
 		}
 		else	# There are no topics
-			$this->db->query('UPDATE '.$this->db->prefix.'forums SET num_topics=0, num_posts=0, last_post=NULL, last_post_id=NULL, last_poster=NULL WHERE id='.$forum_id) or $this->fatal_error('Unable to update last_post/last_post_id/last_poster', __FILE__, __LINE__, $this->db->error());
+			$this->db->query('UPDATE '.$this->db->prefix.'forums SET num_topics=0, num_posts=0, last_post=NULL, last_post_id=NULL, last_poster=NULL WHERE id='.$forum_id) or $this->fatal_error('Unable to update last_post/last_post_id/last_poster',__FILE__,__LINE__,$this->db->error());
 	}
 	
 	/**
@@ -1596,11 +1596,11 @@ class punsapi_core
 		$topic_id = intval($topic_id);
 		
 		# Delete the topic and any redirect topics
-		$this->db->query('DELETE FROM '.$this->db->prefix.'topics WHERE id='.$topic_id.' OR moved_to='.$topic_id) or $this->fatal_error('Unable to delete topic', __FILE__, __LINE__, $this->db->error());
+		$this->db->query('DELETE FROM '.$this->db->prefix.'topics WHERE id='.$topic_id.' OR moved_to='.$topic_id) or $this->fatal_error('Unable to delete topic',__FILE__,__LINE__,$this->db->error());
 	
 		# Create a list of the post ID's in this topic
 		$post_ids = '';
-		$row = $this->db->select('SELECT id FROM '.$this->db->prefix.'posts WHERE topic_id='.$topic_id) or $this->fatal_error('Unable to fetch posts', __FILE__, __LINE__, $this->db->error());
+		$row = $this->db->select('SELECT id FROM '.$this->db->prefix.'posts WHERE topic_id='.$topic_id) or $this->fatal_error('Unable to fetch posts',__FILE__,__LINE__,$this->db->error());
 		
 		while ($row->fetch())
 			$post_ids .= ($post_ids != '') ? ','.$row->f('id') : $row->f('id');
@@ -1611,11 +1611,11 @@ class punsapi_core
 			$this->_strip_search_index($post_ids);
 	
 			# Delete posts in topic
-			$this->db->query('DELETE FROM '.$this->db->prefix.'posts WHERE topic_id='.$topic_id) or $this->fatal_error('Unable to delete posts', __FILE__, __LINE__, $this->db->error());
+			$this->db->query('DELETE FROM '.$this->db->prefix.'posts WHERE topic_id='.$topic_id) or $this->fatal_error('Unable to delete posts',__FILE__,__LINE__,$this->db->error());
 		}
 	
 		# Delete any subscriptions for this topic
-		$this->db->query('DELETE FROM '.$this->db->prefix.'subscriptions WHERE topic_id='.$topic_id) or $this->fatal_error('Unable to delete subscriptions', __FILE__, __LINE__, $this->db->error());
+		$this->db->query('DELETE FROM '.$this->db->prefix.'subscriptions WHERE topic_id='.$topic_id) or $this->fatal_error('Unable to delete subscriptions',__FILE__,__LINE__,$this->db->error());
 	}
 
 	/**
@@ -1632,7 +1632,7 @@ class punsapi_core
 		$post_id = intval($post_id);
 		$topic_id = intval($topic_id);
 		
-		$rs = $this->db->select('SELECT id, poster, posted FROM '.$this->db->prefix.'posts WHERE topic_id='.$topic_id.' ORDER BY id DESC LIMIT 2') or $this->fatal_error('Unable to fetch post info', __FILE__, __LINE__, $this->db->error());
+		$rs = $this->db->select('SELECT id, poster, posted FROM '.$this->db->prefix.'posts WHERE topic_id='.$topic_id.' ORDER BY id DESC LIMIT 2') or $this->fatal_error('Unable to fetch post info',__FILE__,__LINE__,$this->db->error());
 		
 		$rs->moveStart();
 		$last_id = $rs->f('id');
@@ -1642,12 +1642,12 @@ class punsapi_core
 		$second_posted = $rs->f('posted');
 	
 		# Delete the post
-		$this->db->query('DELETE FROM '.$this->db->prefix.'posts WHERE id='.$post_id) or $this->fatal_error('Unable to delete post', __FILE__, __LINE__, $this->db->error());
+		$this->db->query('DELETE FROM '.$this->db->prefix.'posts WHERE id='.$post_id) or $this->fatal_error('Unable to delete post',__FILE__,__LINE__,$this->db->error());
 		
 		$this->_strip_search_index($post_id);
 	
 		# Count number of replies in the topic
-		$rs = $this->db->select('SELECT COUNT(id) AS num_replies FROM '.$this->db->prefix.'posts WHERE topic_id='.$topic_id) or $this->fatal_error('Unable to fetch post count for topic', __FILE__, __LINE__, $this->db->error());
+		$rs = $this->db->select('SELECT COUNT(id) AS num_replies FROM '.$this->db->prefix.'posts WHERE topic_id='.$topic_id) or $this->fatal_error('Unable to fetch post count for topic',__FILE__,__LINE__,$this->db->error());
 		$num_replies = $rs->f('num_replies') - 1;
 	
 		# If the message we deleted is the most recent in the topic (at the end of the topic)
@@ -1656,16 +1656,16 @@ class punsapi_core
 			# If there is a $second_last_id there is more than 1 reply to the topic
 			if (!empty($second_last_id))
 			{
-				$this->db->query('UPDATE '.$this->db->prefix.'topics SET last_post='.$second_posted.', last_post_id='.$second_last_id.', last_poster=\''.$this->db->escape($second_poster).'\', num_replies='.$num_replies.' WHERE id='.$topic_id) or $this->fatal_error('Unable to update topic', __FILE__, __LINE__, $this->db->error());
+				$this->db->query('UPDATE '.$this->db->prefix.'topics SET last_post='.$second_posted.', last_post_id='.$second_last_id.', last_poster=\''.$this->db->escape($second_poster).'\', num_replies='.$num_replies.' WHERE id='.$topic_id) or $this->fatal_error('Unable to update topic',__FILE__,__LINE__,$this->db->error());
 			}
 			else {
 				# We deleted the only reply, so now last_post/last_post_id/last_poster is posted/id/poster from the topic itself
-				$this->db->query('UPDATE '.$this->db->prefix.'topics SET last_post=posted, last_post_id=id, last_poster=poster, num_replies='.$num_replies.' WHERE id='.$topic_id) or $this->fatal_error('Unable to update topic', __FILE__, __LINE__, $this->db->error());
+				$this->db->query('UPDATE '.$this->db->prefix.'topics SET last_post=posted, last_post_id=id, last_poster=poster, num_replies='.$num_replies.' WHERE id='.$topic_id) or $this->fatal_error('Unable to update topic',__FILE__,__LINE__,$this->db->error());
 			}
 		}
 		else {
 			# Otherwise we just decrement the reply counter
-			$this->db->query('UPDATE '.$this->db->prefix.'topics SET num_replies='.$num_replies.' WHERE id='.$topic_id) or $this->fatal_error('Unable to update topic', __FILE__, __LINE__, $this->db->error());
+			$this->db->query('UPDATE '.$this->db->prefix.'topics SET num_replies='.$num_replies.' WHERE id='.$topic_id) or $this->fatal_error('Unable to update topic',__FILE__,__LINE__,$this->db->error());
 		}
 	}
 
