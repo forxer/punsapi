@@ -24,54 +24,32 @@
 if (!defined('IN_PUNSAPI'))
 	exit;
 
-?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title><?php echo 'Error - '.$this->htmlspecialchars($this->config['o_board_title']) ?></title>
-<style type="text/css">
-<!--
-#pun-error {margin: 10% 20% auto 20%}
-.pun {font: normal 75%/130% Verdana, Arial, Helvetica, sans-serif}
-#pun-error .c-any {border: 1px solid #b84623}
-h1 {margin: 0; color: #fff; background-color: #b84623; padding: 0.4em 1em; font-size: 1em}
-h1 span {font-size: 1.2em}
-.pun .c-any {padding: 1em 1em 0.2em 1em; background-color: #f7f7f7}
-.pun .c-any p {padding: 0 0 0.8em 0; margin: 0;font-size: 1.1em}
-.pun .c-any p span {display: block}
--->
-</style>
 </head>
-<body>
+<body style="margin: 40px; font: 85%/130% verdana, arial, sans-serif; color: #333;">
 
-<div id="pun-error">
+<h1>An error was encountered</h1>
+<hr />
 
-<div id="pun-main1" class="a-section a-main">
-
-	<h1 class="main-title"><span>An error was encountered</span></h1>
-
-	<div class="b-sectionion b-message">
-		<div class="c-section c-any">
 <?php
-
 	if ($this->options['debug'])
 	{
-		if ($file && $line)
-		{
-			echo "\t\t\t".'<p><span><strong>File:</strong> '.$file.'</span>'.
-			"\n\t\t\t".'<span><strong>Line:</strong> '.$line.'</span></p>';
-		}
-		
-		echo "\t\t\t".'<p><strong>PunSAPI reported</strong>: '.$message.'</p>'."\n";
+		echo "<h2>in $file</h2>\n<ul>\n";
+		echo "\t<li><strong>Line:</strong> $line</li>\n";
+		echo "\t<li><strong>PunSAPI reported:</strong> $message</li>\n";
 
 		if ($db_error)
 		{
-			echo "\t\t\t".'<p><strong>Database reported:</strong> '.htmlspecialchars($db_error['error_msg']).(($db_error['error_no']) ? ' (Errno: '.$db_error['error_no'].')' : '').'</p>'."\n";
+			echo "\t<li><strong>Database reported:</strong> ".htmlspecialchars($db_error['error_msg']).(($db_error['error_no']) ? ' (Errno: '.$db_error['error_no'].')' : '')."</li>\n";
 
 			if ($db_error['error_sql'] != '')
-				echo "\t\t\t".'<p><strong>Failed query:</strong> '.htmlspecialchars($db_error['error_sql']).'</p>'."\n";
+				echo "\t<li><strong>Failed query:</strong> <code>".htmlspecialchars($db_error['error_sql'])."</code></li>\n";
 		}
+
+		echo "</ul>\n";
 	}
 	else
 		echo "\t\t\t".'<p><strong>Error: </strong>'.$message.'.</p>'."\n";
