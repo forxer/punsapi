@@ -76,7 +76,7 @@ class punsapi_core
 		define('IN_PUNSAPI', 1);
 		
 		# inits
-		$this->version = '0.3';
+		$this->version = '0.4';
 		$this->pun_root = dirname(__FILE__).'/../../';		
 		$this->error = array();
 		$this->_cache = array();
@@ -140,24 +140,18 @@ class punsapi_core
 		# Strip slashes from GET/POST/COOKIE (if magic_quotes_gpc is enabled)
 		if (get_magic_quotes_gpc())
 		{
-			function stripslashes_array($array)
-			{
-				return is_array($array) ? array_map('stripslashes_array', $array) : stripslashes($array);
-			}
-		
-			$_GET = stripslashes_array($_GET);
-			$_POST = stripslashes_array($_POST);
-			$_COOKIE = stripslashes_array($_COOKIE);
+			$_GET = punsapi_core::_stripslashes_array($_GET);
+			$_POST = punsapi_core::_stripslashes_array($_POST);
+			$_COOKIE = punsapi_core::_stripslashes_array($_COOKIE);
 		}
 
 		# Define a few commonly used constants
 		if (!defined('PUN_ROOT')) define('PUN_ROOT', $this->pun_root);
-		
-		define('PUN_UNVERIFIED', 32000);
-		define('PUN_ADMIN', 1);
-		define('PUN_MOD', 2);
-		define('PUN_GUEST', 3);
-		define('PUN_MEMBER', 4);
+		if (!defined('PUN_UNVERIFIED')) define('PUN_UNVERIFIED', 32000);
+		if (!defined('PUN_ADMIN')) define('PUN_ADMIN', 1);
+		if (!defined('PUN_MOD')) define('PUN_MOD', 2);
+		if (!defined('PUN_GUEST')) define('PUN_GUEST', 3);
+		if (!defined('PUN_MEMBER')) define('PUN_MEMBER', 4);
 
 		# Load DB abstraction layer and connect
 		$this->_db_connect();
@@ -236,6 +230,15 @@ class punsapi_core
 
 	/** Methods used in constructor
 	----------------------------------------------------------*/
+
+	/**
+	@function _stripslashes_array
+	
+	*/
+	function _stripslashes_array($array)
+	{
+		return is_array($array) ? array_map(array('punsapi_core', '_stripslashes_array'), $array) : stripslashes($array);
+	}
 
 	/**
 	@function _unregister_globals
@@ -1080,7 +1083,7 @@ class punsapi_core
 	@function _handle_img_tag
 	Turns an URL from the [img] tag into an <img> tag or a <a href...> tag
 	*/
-	function handle_img_tag($url, $is_signature=false, $align='')
+	function _handle_img_tag($url, $is_signature=false, $align='')
 	{
 		$style = '';
 		if ($align != '')
@@ -1149,8 +1152,8 @@ class punsapi_core
 						 '<del>$1</del>',
 						 '<q>$1</q>',
 						 '<code>$1</code>',
-						 'handle_url_tag(\'$1\')',
-						 'handle_url_tag(\'$1\', \'$2\')',
+						 '$this->_handle_url_tag(\'$1\')',
+						 '$this->_handle_url_tag(\'$1\', \'$2\')',
 						 'nospam_tag(\'$1\')',
 						 'nospam_tag(\'$1\', \'$2\')',
 						 '<a href="mailto:$1">$1</a>',
