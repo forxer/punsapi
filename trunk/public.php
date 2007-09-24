@@ -1283,15 +1283,18 @@ class punsapi extends punsapi_core
 		
 		if ($npid > 0)
 			$reqPlus .= 'AND p.id!='.$npid.' ';
-		
+	
 		$strReq = 
 		'SELECT u.email, u.title, u.url, u.location, u.use_avatar, u.signature, '.
 		'u.email_setting, u.num_posts, u.registered, u.admin_note, '.
+		't.id AS tid, t.subject, t.posted AS tposted, t.last_post, t.last_post_id, '.
+		't.last_poster, t.num_views, t.num_replies, t.closed, t.sticky, t.moved_to, '.
 		'p.id, p.poster AS username, p.poster_id, p.poster_ip, p.poster_email, '.
 		'p.message, p.hide_smilies, p.posted, p.edited, p.edited_by, '.
 		'g.g_id, g.g_user_title, '.
 		'o.user_id AS is_online '.
 		'FROM '.$this->db->prefix.'posts AS p '.
+			'INNER JOIN '.$this->db->prefix.'topics AS t ON t.id=p.topic_id '.
 			'INNER JOIN '.$this->db->prefix.'users AS u ON u.id=p.poster_id '.
 			'INNER JOIN '.$this->db->prefix.'groups AS g ON g.g_id=u.group_id '.
 			'LEFT JOIN '.$this->db->prefix.'online AS o ON (o.user_id=u.id AND o.user_id!=1 AND o.idle=0) '.
