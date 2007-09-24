@@ -120,19 +120,19 @@ class punsapi_core
 		
 		# For convenience, duplicate conf data
 		$this->conf = array();
-		$this->conf['db_type'] = &$GLOBALS['db_type'];
-		$this->conf['db_host'] = &$GLOBALS['db_host'];
-		$this->conf['db_name'] = &$GLOBALS['db_name'];
-		$this->conf['db_username'] = &$GLOBALS['db_username'];
-		$this->conf['db_password'] = &$GLOBALS['db_password'];
-		$this->conf['db_prefix'] = &$GLOBALS['db_prefix'];
-		$this->conf['p_connect'] = &$GLOBALS['p_connect'];
+		$this->conf['db_type'] = isset($db_type) ? $db_type : $GLOBALS['db_type'];
+		$this->conf['db_host'] = isset($db_host) ? $db_host : $GLOBALS['db_host'];
+		$this->conf['db_name'] = isset($db_name) ? $db_name : $GLOBALS['db_name'];
+		$this->conf['db_username'] = isset($db_username) ? $db_username : $GLOBALS['db_username'];
+		$this->conf['db_password'] = isset($db_password) ? $db_password : $GLOBALS['db_password'];
+		$this->conf['db_prefix'] = isset($db_prefix) ? $db_prefix : $GLOBALS['db_prefix'];
+		$this->conf['p_connect'] = isset($p_connect) ? $p_connect : $GLOBALS['p_connect'];
 
-		$this->conf['cookie_name'] = &$GLOBALS['cookie_name'];
-		$this->conf['cookie_domain'] = &$GLOBALS['cookie_domain'];
-		$this->conf['cookie_path'] = &$GLOBALS['cookie_path'];
-		$this->conf['cookie_secure'] = &$GLOBALS['cookie_secure'];
-		$this->conf['cookie_seed'] = &$GLOBALS['cookie_seed'];
+		$this->conf['cookie_name'] = isset($cookie_name) ? $cookie_name : $GLOBALS['cookie_name'];
+		$this->conf['cookie_domain'] = isset($cookie_domain) ? $cookie_domain : $GLOBALS['cookie_domain'];
+		$this->conf['cookie_path'] = isset($cookie_path) ? $cookie_path : $GLOBALS['cookie_path'];
+		$this->conf['cookie_secure'] = isset($cookie_secure) ? $cookie_secure : $GLOBALS['cookie_secure'];
+		$this->conf['cookie_seed'] = isset($cookie_seed) ? $cookie_seed : $GLOBALS[''];
 
 		# Turn off magic_quotes_runtime
 		set_magic_quotes_runtime(0);
@@ -168,7 +168,7 @@ class punsapi_core
 			require $this->pun_root.'cache/cache_config.php';
 		}
 		
-		$this->config = &$GLOBALS['pun_config'];
+		$this->config = isset($pun_config) ? $pun_config : $GLOBALS['pun_config'];
 
 		# Enable output buffering
 		if (!$this->options['disable_buffering'])
@@ -194,7 +194,7 @@ class punsapi_core
 			$this->fatal_error('There is no valid language pack \''.htmlspecialchars($this->user['language']).'\' installed. Please reinstall a language of that name', __FILE__, __LINE__);
 
 		$this->lang = array();
-		$this->lang['common'] = &$lang_common;
+		$this->lang['common'] = isset($lang_common) ? $lang_common : $GLOBALS['lang_common'];
 
 		# Load cached bans
 		if (!defined('PUN_BANS_LOADED') && file_exists($this->pun_root.'cache/cache_bans.php'))
@@ -206,7 +206,7 @@ class punsapi_core
 			require $this->pun_root.'cache/cache_bans.php';
 		}
 
-		$this->bans = &$GLOBALS['pun_bans'];
+		$this->bans = isset($pun_bans) ? $pun_bans : $GLOBALS['pun_bans'];
 
 		# Check if current user is banned
 		if ($this->options['check_bans'])
