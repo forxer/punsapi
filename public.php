@@ -1518,7 +1518,7 @@ class punsapi extends punsapi_core
 								$mail_message = str_replace('<replier>', $username, $mail_message);
 								$mail_message = str_replace('<post_url>', $this->config['o_base_url'].'/viewtopic.php?pid='.$new_pid.'#p'.$new_pid, $mail_message);
 								$mail_message = str_replace('<unsubscribe_url>', $this->config['o_base_url'].'/misc.php?unsubscribe='.$tid, $mail_message);
-								$mail_message = str_replace('<board_mailer>', $this->config['o_board_title'].' '.__('Mailer'), $mail_message);
+								$mail_message = str_replace('<board_mailer>', $this->config['o_board_title'].' '.$this->lang['common']['Mailer'], $mail_message);
 
 								$mail_subject_full = str_replace('<topic_subject>', '\''.$cur_posting->f('subject').'\'', $mail_subject_full);
 								$mail_message_full = str_replace('<topic_subject>', '\''.$cur_posting->f('subject').'\'', $mail_message_full);
@@ -1526,7 +1526,7 @@ class punsapi extends punsapi_core
 								$mail_message_full = str_replace('<message>', $message, $mail_message_full);
 								$mail_message_full = str_replace('<post_url>', $this->config['o_base_url'].'/viewtopic.php?pid='.$new_pid.'#p'.$new_pid, $mail_message_full);
 								$mail_message_full = str_replace('<unsubscribe_url>', $this->config['o_base_url'].'/misc.php?unsubscribe='.$tid, $mail_message_full);
-								$mail_message_full = str_replace('<board_mailer>', $this->config['o_board_title'].' '.__('Mailer'), $mail_message_full);
+								$mail_message_full = str_replace('<board_mailer>', $this->config['o_board_title'].' '.$this->lang['common']['Mailer'], $mail_message_full);
 
 								$notification_emails[$subscriber->f('language')][0] = $mail_subject;
 								$notification_emails[$subscriber->f('language')][1] = $mail_message;
